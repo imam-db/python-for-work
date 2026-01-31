@@ -1,0 +1,16 @@
+# Konfigurasi Excel Splitter
+# Semua setting bisa di-override via CLI arguments
+
+input: sample/laporan_nasional.xlsx
+output_folder: output/
+
+# Kolom yang digunakan untuk split
+split_by: "Cabang"
+
+# Prefix dan suffix untuk nama file output
+# Contoh: prefix="laporan_", suffix="_2024" -> laporan_Jakarta_2024.xlsx
+prefix: ""
+suffix: ""
+
+# Sertakan header di setiap file output
+include_header: true

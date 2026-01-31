@@ -8,6 +8,7 @@ Kumpulan script Python untuk mempermudah pekerjaan sehari-hari. Setiap folder be
 |----|------|-----------|
 | 01 | [Merge Excel](./01-merge-excel/) | Menggabungkan beberapa file Excel menjadi satu file |
 | 02 | [Data Cleaner](./02-data-cleaner/) | Membersihkan dan menstandardisasi data Excel (nama, tanggal, telepon, duplikat) |
+| 03 | [Excel Splitter](./03-excel-splitter/) | Memecah file Excel berdasarkan nilai kolom tertentu |
 
 ## Cara Menggunakan
 
