@@ -10,6 +10,7 @@ Kumpulan script Python untuk mempermudah pekerjaan sehari-hari. Setiap folder be
 | 02 | [Data Cleaner](./02-data-cleaner/) | Membersihkan dan menstandardisasi data Excel (nama, tanggal, telepon, duplikat) |
 | 03 | [Excel Splitter](./03-excel-splitter/) | Memecah file Excel berdasarkan nilai kolom tertentu |
 | 04 | [Excel Comparator](./04-excel-comparator/) | Membandingkan 2 file Excel dan menampilkan perbedaannya |
+| 05 | [Data Validator](./05-data-validator/) | Validasi data Excel berdasarkan rules (email, phone, range, regex, dll) |
 
 ## Cara Menggunakan
 

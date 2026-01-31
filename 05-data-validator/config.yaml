@@ -1,0 +1,43 @@
+# Konfigurasi Data Validator
+# Semua setting bisa di-override via CLI arguments
+
+input: sample/data_pendaftaran.xlsx
+output: output/validation_report.xlsx
+
+# Rules validasi per kolom
+# Setiap kolom bisa punya multiple rules
+rules:
+  Nama Lengkap:
+    - type: required
+
+  Email:
+    - type: required
+    - type: email
+
+  No HP:
+    - type: required
+    - type: phone
+      min_digits: 10
+
+  Tanggal Lahir:
+    - type: date_range
+      min: "1950-01-01"
+      max: "2010-12-31"
+
+  Umur:
+    - type: number_range
+      min: 17
+      max: 65
+
+  NIK:
+    - type: regex
+      pattern: "^\\d{16}$"
+      message: "NIK harus 16 digit angka"
+
+  Status:
+    - type: in_list
+      values: ["Aktif", "Nonaktif", "Pending"]
+
+  # Contoh validasi unique
+  # Email:
+  #   - type: unique
