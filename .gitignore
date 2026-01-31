@@ -17,6 +17,7 @@ env/
 # Generated sample data
 02-data-cleaner/sample/*.xlsx
 03-excel-splitter/sample/*.xlsx
+04-excel-comparator/sample/*.xlsx
 
 # IDE
 .vscode/

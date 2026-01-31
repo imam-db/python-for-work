@@ -1,0 +1,13 @@
+# Konfigurasi Excel Comparator
+# Semua setting bisa di-override via CLI arguments
+
+file_old: sample/data_lama.xlsx
+file_new: sample/data_revisi.xlsx
+
+# Kolom kunci untuk matching baris (opsional)
+# Jika tidak diisi, akan bandingkan berdasarkan posisi baris
+key_column: "No"
+
+# Output file untuk laporan Excel (opsional)
+# Jika tidak diisi, hanya tampilkan di console
+output: output/laporan_perbandingan.xlsx
