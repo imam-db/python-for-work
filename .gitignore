@@ -14,6 +14,9 @@ env/
 */output/*.xls
 */output/*.csv
 
+# Generated sample data
+02-data-cleaner/sample/*.xlsx
+
 # IDE
 .vscode/
 .idea/

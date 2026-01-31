@@ -1,0 +1,30 @@
+# Konfigurasi Data Cleaner
+# Sesuaikan dengan kebutuhan data kamu
+
+input: sample/data_kotor.xlsx
+output: output/data_bersih.xlsx
+
+cleaning:
+  # Standardisasi nama
+  nama:
+    kolom: "Nama Lengkap"
+    format: "title"  # title, upper, lower
+    trim: true
+
+  # Standardisasi format tanggal
+  tanggal:
+    kolom: "Tanggal Lahir"
+    format: "%d-%m-%Y"  # Contoh output: 15-01-2024
+
+  # Standardisasi nomor HP
+  telepon:
+    kolom: "No HP"
+    format: "0xxx-xxxx-xxxx"  # Format output yang diinginkan
+
+  # Hapus duplikat berdasarkan kolom tertentu
+  duplikat:
+    kolom: ["Nama Lengkap", "No HP"]
+
+  # Hapus baris jika kolom ini kosong
+  hapus_kosong:
+    kolom: ["Nama Lengkap"]
