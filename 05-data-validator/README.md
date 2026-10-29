@@ -22,8 +22,12 @@ Nama Lengkap · Email · No HP · Tanggal Lahir · Umur · NIK · Status
 
 ## Install
 
+Dependencies live in the repository root:
+
 ```bash
 pip install -r requirements.txt
+# or, for the pfw command too:
+pip install -e .
 ```
 
 ## Usage
@@ -34,6 +38,13 @@ python data_validator.py
 
 # pass input and output on the command line
 python data_validator.py data.xlsx --output report.xlsx
+```
+
+The same options are available through `pfw`:
+
+```bash
+pfw validate
+pfw validate data.xlsx --output report.xlsx
 ```
 
 Command-line paths resolve against the current working directory. `input` and `output` inside

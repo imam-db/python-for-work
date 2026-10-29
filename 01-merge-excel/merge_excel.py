@@ -108,9 +108,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     setup_logging()
-    args = build_parser().parse_args()
+    args = build_parser().parse_args(argv)
 
     script_dir = Path(__file__).parent
     output_file = args.output_file or str(script_dir / "output" / "hasil_gabungan.xlsx")
