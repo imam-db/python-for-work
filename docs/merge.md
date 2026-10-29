@@ -1,6 +1,6 @@
 # merge
 
-Combine every `.xlsx` workbook in a folder into a single file.
+Combine every `.xlsx`, `.csv`, or `.parquet` file in a folder into a single file.
 
 ## Story
 
@@ -11,8 +11,9 @@ transactions (measured on the included sample data).
 
 ## Input
 
-A folder of `.xlsx` files that share (or nearly share) the same columns. Empty files are
-skipped; mismatched columns still merge with a warning and NaN fill.
+A folder of tabular files that share (or nearly share) the same columns. Empty files are
+skipped; mismatched columns still merge with a warning and NaN fill. Formats may be mixed
+in one folder (xlsx + csv + parquet).
 
 ## Command
 
@@ -23,5 +24,5 @@ pfw merge ./sample ./output/hasil_gabungan.xlsx
 
 ## Output
 
-One workbook with an added `Cabang` column derived from each file name, plus a console
-summary of rows merged and any skipped or mismatched files.
+One file (format taken from the output path) with an added `Cabang` column derived from each
+file name, plus a console summary of rows merged and any skipped or mismatched files.

@@ -46,7 +46,7 @@ BULAN_INDONESIA = {
 
 
 def convert_indonesian_date(date_str: str) -> str:
-    """Konversi tanggal format Indonesia ke format standar."""
+    """Convert an Indonesian-style date string to a parseable form."""
     date_str = str(date_str).strip().lower()
 
     for bulan_indo, bulan_num in BULAN_INDONESIA.items():
@@ -59,10 +59,10 @@ def convert_indonesian_date(date_str: str) -> str:
 
 
 def clean_nama(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
-    """Standardisasi format nama."""
+    """Standardize name formatting."""
     kolom = config.get("kolom")
     if kolom not in df.columns:
-        log.warning("  Peringatan: Kolom '%s' tidak ditemukan, skip cleaning nama", kolom)
+        log.warning("  Warning: column '%s' not found, skipping name cleaning", kolom)
         return df
 
     format_type = config.get("format", "title")
@@ -83,16 +83,16 @@ def clean_nama(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
 
     changed = int((original != df[kolom]).sum())
     stats["nama_fixed"] = changed
-    log.info("  Nama: %s data di-standardisasi", changed)
+    log.info("  Names: %s value(s) standardized", changed)
 
     return df
 
 
 def clean_tanggal(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
-    """Standardisasi format tanggal."""
+    """Standardize date formatting."""
     kolom = config.get("kolom")
     if kolom not in df.columns:
-        log.warning("  Peringatan: Kolom '%s' tidak ditemukan, skip cleaning tanggal", kolom)
+        log.warning("  Warning: column '%s' not found, skipping date cleaning", kolom)
         return df
 
     output_format = config.get("format", "%d-%m-%Y")
@@ -112,16 +112,16 @@ def clean_tanggal(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
 
     df[kolom] = df[kolom].apply(parse_date)
     stats["tanggal_fixed"] = fixed_count
-    log.info("  Tanggal: %s data di-format ke %s", fixed_count, output_format)
+    log.info("  Dates: %s value(s) formatted to %s", fixed_count, output_format)
 
     return df
 
 
 def clean_telepon(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
-    """Standardisasi format nomor telepon tanpa memotong digit."""
+    """Standardize phone numbers without truncating digits."""
     kolom = config.get("kolom")
     if kolom not in df.columns:
-        log.warning("  Peringatan: Kolom '%s' tidak ditemukan, skip cleaning telepon", kolom)
+        log.warning("  Warning: column '%s' not found, skipping phone cleaning", kolom)
         return df
 
     output_format = config.get("format", "0xxx-xxxx-xxxx")
@@ -150,10 +150,10 @@ def clean_telepon(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
     stats["telepon_fixed"] = fixed_count
     stats["telepon_invalid"] = invalid_count
 
-    log.info("  Telepon: %s data di-format", fixed_count)
+    log.info("  Phones: %s value(s) formatted", fixed_count)
     if invalid_count:
         log.warning(
-            "  Peringatan: %s nomor tidak valid (harus 10-15 digit), nilai asli dipertahankan",
+            "  Warning: %s number(s) invalid (must be 10-15 digits); original values kept",
             invalid_count,
         )
 
@@ -161,12 +161,12 @@ def clean_telepon(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
 
 
 def remove_duplicates(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
-    """Hapus baris duplikat berdasarkan kolom tertentu."""
+    """Drop duplicate rows based on the configured columns."""
     kolom = config.get("kolom", [])
 
     missing = [k for k in kolom if k not in df.columns]
     if missing:
-        log.warning("  Peringatan: Kolom %s tidak ditemukan, skip hapus duplikat", missing)
+        log.warning("  Warning: column(s) %s not found, skipping duplicate removal", missing)
         return df
 
     before = len(df)
@@ -174,18 +174,18 @@ def remove_duplicates(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFra
     removed = before - len(df)
 
     stats["duplikat_removed"] = removed
-    log.info("  Duplikat: %s baris dihapus", removed)
+    log.info("  Duplicates: %s row(s) removed", removed)
 
     return df
 
 
 def remove_empty(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
-    """Hapus baris dengan kolom kosong."""
+    """Drop rows that have empty values in the configured columns."""
     kolom = config.get("kolom", [])
 
     missing = [k for k in kolom if k not in df.columns]
     if missing:
-        log.warning("  Peringatan: Kolom %s tidak ditemukan, skip hapus kosong", missing)
+        log.warning("  Warning: column(s) %s not found, skipping empty-row removal", missing)
         return df
 
     before = len(df)
@@ -195,32 +195,32 @@ def remove_empty(df: pd.DataFrame, config: dict, stats: dict) -> pd.DataFrame:
     removed = before - len(df)
 
     stats["empty_removed"] = removed
-    log.info("  Baris kosong: %s baris dihapus", removed)
+    log.info("  Empty rows: %s row(s) removed", removed)
 
     return df
 
 
 def phone_columns(cleaning: dict) -> tuple[str, ...]:
-    """Ambil nama kolom telepon dari konfigurasi cleaning."""
+    """Return phone column names from the cleaning config."""
     telepon = cleaning.get("telepon") or {}
     kolom = telepon.get("kolom")
     return (kolom,) if kolom else ()
 
 
 def clean_data(config_path: str | Path) -> pd.DataFrame:
-    """Bersihkan data berdasarkan konfigurasi YAML.
+    """Clean data using a YAML configuration.
 
-    ``input`` dan ``output`` di config di-resolve relatif terhadap current
-    working directory (path absolut dibiarkan).
+    ``input`` and ``output`` paths in the config are resolved relative to the
+    current working directory (absolute paths are left unchanged).
     """
     config_file = Path(config_path)
     if not config_file.exists():
-        raise FileNotFoundError(f"File konfigurasi '{config_path}' tidak ditemukan")
+        raise FileNotFoundError(f"Config file '{config_path}' not found")
 
     config = load_config(config_file)
 
     if "input" not in config or "output" not in config:
-        raise ValueError("Config harus berisi 'input' dan 'output'")
+        raise ValueError("Config must include 'input' and 'output'")
 
     input_file = resolve_path(Path.cwd(), config["input"])
     output_file = resolve_path(Path.cwd(), config["output"])
@@ -228,15 +228,15 @@ def clean_data(config_path: str | Path) -> pd.DataFrame:
     text_columns = phone_columns(cleaning)
 
     if not input_file.exists():
-        raise FileNotFoundError(f"File '{input_file}' tidak ditemukan")
+        raise FileNotFoundError(f"File '{input_file}' not found")
 
-    log.info("Membaca file: %s", input_file)
+    log.info("Reading file: %s", input_file)
     df = read_table(input_file, text_columns=text_columns)
-    log.info("Total baris: %s", len(df))
+    log.info("Total rows: %s", len(df))
 
     stats: dict = {}
     log.info("")
-    log.info("Proses cleaning:")
+    log.info("Cleaning steps:")
 
     if "nama" in cleaning:
         df = clean_nama(df, cleaning["nama"], stats)
@@ -252,8 +252,8 @@ def clean_data(config_path: str | Path) -> pd.DataFrame:
     write_table(df, output_file, text_columns=text_columns)
 
     log.info("")
-    log.info("Berhasil! Data bersih disimpan ke: %s", output_file)
-    log.info("Total baris setelah cleaning: %s", len(df))
+    log.info("Done! Clean data saved to: %s", output_file)
+    log.info("Total rows after cleaning: %s", len(df))
 
     return df
 
@@ -262,14 +262,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config",
         "-c",
-        help="File konfigurasi YAML (default: configs/clean.yaml)",
+        help="YAML config file (default: configs/clean.yaml)",
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pfw clean",
-        description="Membersihkan data Excel berdasarkan aturan di config YAML.",
+        description="Clean tabular data using rules from a YAML config.",
     )
     add_arguments(parser)
     return parser

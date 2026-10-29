@@ -29,6 +29,31 @@ def test_empty_split_values_go_to_empty_bucket(tmp_path):
     assert empty_bucket["Total"].sum() == 70
 
 
+def test_no_header_writes_through_io(tmp_path):
+    source = tmp_path / "laporan.xlsx"
+    pd.DataFrame(
+        {
+            "Cabang": ["Jakarta", "Bandung"],
+            "Total": [10, 20],
+        }
+    ).to_excel(source, index=False)
+
+    nested = tmp_path / "nested" / "out"
+    results = split_excel(
+        str(source),
+        "Cabang",
+        str(nested),
+        include_header=False,
+    )
+
+    assert len(results) == 2
+    jakarta = nested / "Jakarta.xlsx"
+    assert jakarta.exists()
+    frame = pd.read_excel(jakarta, header=None)
+    assert list(frame.iloc[0]) == ["Jakarta", 10]
+    assert len(frame) == 1
+
+
 def test_seeded_sample_is_reproducible():
     first = build_split_data()
     second = build_split_data()

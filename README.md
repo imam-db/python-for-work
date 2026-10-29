@@ -1,6 +1,6 @@
 # Python for Work
 
-Everyday Excel utilities for analysts and operations teams — merge, clean, split, diff, and
+Everyday Python utilities for analysts and operations teams — merge, clean, split, diff, and
 validate tabular files from one `pfw` command. Built with pandas + openpyxl (CSV and Parquet
 too). Requires Python 3.10+.
 
@@ -8,7 +8,7 @@ too). Requires Python 3.10+.
 
 | Utility | What it does | Sample result (measured) |
 |---------|--------------|--------------------------|
-| [merge](docs/merge.md) | Merge every workbook in a folder into one file | 3 files → **272** rows |
+| [merge](docs/merge.md) | Merge every xlsx/csv/parquet file in a folder into one file | 3 files → **272** rows |
 | [clean](docs/clean.md) | Standardize names, dates, phones; drop dupes/empties | 10 dirty → **8** clean rows |
 | [split](docs/split.md) | Split one workbook by a column value | 100 rows → **5** files |
 | [diff](docs/diff.md) | Diff two workbook versions cell by cell | **2** added, **2** deleted, **6** changed |
