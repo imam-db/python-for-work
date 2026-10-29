@@ -1,0 +1,25 @@
+# Data Cleaner configuration
+# Relative input/output paths resolve against the current working directory.
+
+input: sample/data_kotor.xlsx
+output: output/data_bersih.xlsx
+
+cleaning:
+  nama:
+    kolom: "Nama Lengkap"
+    format: "title"
+    trim: true
+
+  tanggal:
+    kolom: "Tanggal Lahir"
+    format: "%d-%m-%Y"
+
+  telepon:
+    kolom: "No HP"
+    format: "0xxx-xxxx-xxxx"
+
+  duplikat:
+    kolom: ["Nama Lengkap", "No HP"]
+
+  hapus_kosong:
+    kolom: ["Nama Lengkap"]

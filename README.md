@@ -1,96 +1,67 @@
-# Python for Work Utilities
+# Python for Work
 
-Five small Python utilities for everyday Excel work — the repetitive cleanup that quietly
-eats an afternoon. They are built for analysts, admins, and operations staff who already know
-Excel but would rather not copy-paste the same monthly report twenty times.
-
-Each utility lives in its own folder, uses pandas + openpyxl, ships synthetic sample data,
-and can be tried in one command. Shared helpers (config loading, phone normalization,
-text-safe Excel I/O) live in `common/`. Requires Python 3.10+.
+Everyday Excel utilities for analysts and operations teams — merge, clean, split, diff, and
+validate tabular files from one `pfw` command. Built with pandas + openpyxl (CSV and Parquet
+too). Requires Python 3.10+.
 
 ## Utilities
 
-| # | Utility | What it does | Sample result |
-|---|---------|--------------|---------------|
-| 1 | [01-merge-excel](./01-merge-excel/) | Merge every workbook in a folder into one file | 3 files → **272 rows** (72 + 120 + 80) |
-| 2 | [02-data-cleaner](./02-data-cleaner/) | Standardize names, dates, and phones; drop duplicates and empty rows | 10 dirty rows → **8 clean rows** (1 duplicate + 1 empty removed) |
-| 3 | [03-excel-splitter](./03-excel-splitter/) | Split one workbook into per-value files | 100 rows → **5 files** (Jakarta 23, Makassar 22, Bandung 20, Surabaya 20, Medan 15) |
-| 4 | [04-excel-comparator](./04-excel-comparator/) | Diff two workbook versions cell by cell | **2 added**, **2 deleted**, **6 cells changed** |
-| 5 | [05-data-validator](./05-data-validator/) | Validate rows against YAML rules before import | 12 rows → **5 valid**, **7 with errors**, **17 findings** |
+| Utility | What it does | Sample result (measured) |
+|---------|--------------|--------------------------|
+| [merge](docs/merge.md) | Merge every workbook in a folder into one file | 3 files → **272** rows |
+| [clean](docs/clean.md) | Standardize names, dates, phones; drop dupes/empties | 10 dirty → **8** clean rows |
+| [split](docs/split.md) | Split one workbook by a column value | 100 rows → **5** files |
+| [diff](docs/diff.md) | Diff two workbook versions cell by cell | **2** added, **2** deleted, **6** changed |
+| [validate](docs/validate.md) | Validate rows against YAML rules before import | **5** valid, **7** error rows, **17** findings |
 
-The numbers above come from running each demo on the included sample data, not from
-estimates.
+Numbers come from running each demo on the included sample generators, not estimates.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  CLI["pfw CLI"] --> M[merge]
+  CLI --> C[clean]
+  CLI --> S[split]
+  CLI --> D[diff]
+  CLI --> V[validate]
+  CLI --> Sample[sample]
+  M --> IO["pfw.common.io"]
+  C --> IO
+  S --> IO
+  D --> IO
+  V --> IO
+  Sample --> IO
+  IO --> Files["xlsx / csv / parquet"]
+  C --> YAML["configs/*.yaml"]
+  V --> YAML
+  S --> YAML
+```
 
 ## Quickstart
 
 ```bash
-git clone <repository-url>
-cd python-for-work
-
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-
-pip install -r requirements.txt
-# or, for the pfw command as well:
-# pip install -e .
-
-# Try one demo
-cd 01-merge-excel
-python generate_sample.py
-python merge_excel.py ./sample
+pip install -e ".[dev]"
+pfw sample merge -o ./sample
+pfw merge ./sample ./output/hasil_gabungan.xlsx
 ```
 
-Every utility has its own `generate_sample.py`, so no Excel file needs to be prepared
-beforehand. Generators are safe to run from the utility folder or from the repo root:
+Other commands follow the same pattern: `pfw sample <utility>`, then `pfw <utility> ...`.
+See `pfw --help` and each page under [docs/](docs/).
 
-```bash
-python 03-excel-splitter/generate_sample.py
-python 03-excel-splitter/excel_splitter.py            # uses 03-excel-splitter/config.yaml
-```
-
-By default, config paths resolve against the utility folder while paths passed on the
-command line resolve against your current working directory.
-
-## CLI
-
-Install the package once to get the `pfw` command:
-
-```bash
-pip install -e .
-
-pfw sample merge
-pfw merge ./01-merge-excel/sample
-pfw clean
-pfw split
-pfw compare
-pfw validate
-```
-
-Each command accepts the same arguments as the classic script, and `pfw <command> --help`
-shows its options. Running a script directly still works unchanged:
-
-```bash
-python 01-merge-excel/merge_excel.py ./01-merge-excel/sample
-```
-
-Without installing, `python -m pfw --help` also works when the repository root is on
-`PYTHONPATH`. Use `pfw sample <name>` to generate demo data for any utility.
+YAML configs (kept where they add real value) live in `configs/` for **clean**, **validate**,
+and optional **split** defaults. **merge** and **diff** are CLI-arg driven.
 
 ## Repository layout
 
 ```text
-common/                Shared helpers (config, Excel I/O, phone, logging)
-pfw/                   Unified CLI (pfw <command>)
-01-merge-excel/        Merge workbooks from a folder
-02-data-cleaner/       Standardize and deduplicate rows
-03-excel-splitter/     Split one workbook by a column
-04-excel-comparator/   Diff two workbook versions
-05-data-validator/     Validate rows against YAML rules
-tests/                 pytest suite for all utilities
-.github/workflows/     CI: ruff + pytest
+src/pfw/           Package: CLI + utilities + common helpers
+configs/           YAML for clean / validate / split
+docs/              Per-utility guides
+tests/             pytest suite
 ```
 
-## Development and tests
+## Development
 
 ```bash
 pip install -e ".[dev]"
@@ -98,8 +69,7 @@ ruff check .
 pytest -q
 ```
 
-The GitHub Actions workflow runs the same lint and test commands on every push and pull
-request.
+CI runs the same lint and tests on every push and pull request.
 
 ## License
 
