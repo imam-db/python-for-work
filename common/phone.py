@@ -6,18 +6,11 @@ DEFAULT_MIN_DIGITS = 10
 DEFAULT_MAX_DIGITS = 15
 
 
-def normalize_phone(
-    value: object,
-    min_digits: int = DEFAULT_MIN_DIGITS,
-    max_digits: int = DEFAULT_MAX_DIGITS,
-) -> str | None:
-    """Kembalikan digit telepon dengan awalan ``0`` atau ``None`` jika tidak valid.
+def phone_digits(value: object) -> str | None:
+    """Kembalikan digit telepon dengan awalan ``0`` tanpa cek panjang.
 
-    Aturan:
-    - semua karakter non-digit dibuang
-    - awalan ``62`` diganti ``0``
-    - awalan ``8`` (tanpa 0/62) ditambah ``0``
-    - panjang akhir harus di antara ``min_digits`` dan ``max_digits``
+    Awalan ``62`` diganti ``0`` dan awalan ``8`` (tanpa 0/62) ditambah ``0``.
+    Mengembalikan ``None`` jika tidak ada digit sama sekali.
     """
     if value is None:
         return None
@@ -35,9 +28,20 @@ def normalize_phone(
     elif digits.startswith("8"):
         digits = "0" + digits
 
+    return digits
+
+
+def normalize_phone(
+    value: object,
+    min_digits: int = DEFAULT_MIN_DIGITS,
+    max_digits: int = DEFAULT_MAX_DIGITS,
+) -> str | None:
+    """Kembalikan digit telepon yang valid (10-15 digit) atau ``None``."""
+    digits = phone_digits(value)
+    if digits is None:
+        return None
     if not min_digits <= len(digits) <= max_digits:
         return None
-
     return digits
 
 
