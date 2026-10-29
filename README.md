@@ -1,8 +1,10 @@
 # Python for Work
 
-Everyday Python utilities for analysts and operations teams — merge, clean, split, diff, and
-validate tabular files from one `pfw` command. Built with pandas + openpyxl (CSV and Parquet
-too). Requires Python 3.10+.
+[![CI](https://github.com/imam-db/python-for-work/actions/workflows/ci.yml/badge.svg)](https://github.com/imam-db/python-for-work/actions/workflows/ci.yml)
+
+Python utilities for automating office data work — merge, clean, split, diff, and validate
+tabular files from one `pfw` command. Built with pandas + openpyxl (CSV and Parquet too).
+Requires Python 3.11+.
 
 ## Utilities
 
@@ -10,8 +12,8 @@ too). Requires Python 3.10+.
 |---------|--------------|--------------------------|
 | [merge](docs/merge.md) | Merge every xlsx/csv/parquet file in a folder into one file | 3 files → **272** rows |
 | [clean](docs/clean.md) | Standardize names, dates, phones; drop dupes/empties | 10 dirty → **8** clean rows |
-| [split](docs/split.md) | Split one workbook by a column value | 100 rows → **5** files |
-| [diff](docs/diff.md) | Diff two workbook versions cell by cell | **2** added, **2** deleted, **6** changed |
+| [split](docs/split.md) | Split one tabular file by a column value | 100 rows → **5** files |
+| [diff](docs/diff.md) | Diff two file versions cell by cell | **2** added, **2** deleted, **6** changed |
 | [validate](docs/validate.md) | Validate rows against YAML rules before import | **5** valid, **7** error rows, **17** findings |
 
 Numbers come from running each demo on the included sample generators, not estimates.

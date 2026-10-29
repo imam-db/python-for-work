@@ -1,4 +1,4 @@
-"""Validate Excel rows against rules defined in a YAML config."""
+"""Validate tabular rows against rules defined in a YAML config."""
 
 from __future__ import annotations
 
@@ -302,7 +302,7 @@ def print_report(total_rows: int, errors: list) -> None:
 def export_to_excel(
     df: pd.DataFrame, errors: list, output_path: str, text_columns: tuple[str, ...] = ()
 ) -> None:
-    """Export the validation result to Excel (all values written as text)."""
+    """Export the validation result to an .xlsx report (all values as text)."""
     workbook = Workbook()
 
     ws_summary = workbook.active
@@ -369,7 +369,7 @@ def export_to_excel(
     output_file.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(output_file)
     log.info("")
-    log.info("Excel report saved to: %s", output_path)
+    log.info("Report saved to: %s", output_path)
 
 
 def phone_columns(rules: dict) -> tuple[str, ...]:
@@ -409,7 +409,7 @@ def validate_data(input_file: str, rules: dict, output_file: str | None = None) 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("input", nargs="?", help="Input tabular file")
-    parser.add_argument("--output", "-o", help="Export the report to an Excel file")
+    parser.add_argument("--output", "-o", help="Export the report to an .xlsx file")
     parser.add_argument(
         "--config",
         "-c",
