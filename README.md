@@ -1,69 +1,30 @@
 # Python for Work Utilities
 
-**English summary**
+Five small Python utilities for everyday Excel work — the repetitive cleanup that quietly
+eats an afternoon. They are built for analysts, admins, and operations staff who already know
+Excel but would rather not copy-paste the same monthly report twenty times.
 
-Five small Python utilities for everyday Excel work: merging branch reports, cleaning
-customer data, splitting a national report by branch, comparing two file versions, and
-validating registrations against YAML rules. Every utility runs from its own folder, uses
-pandas/openpyxl, ships synthetic sample data, and can be tried in one command. Shared
-helpers (config loading, phone normalization, text-safe Excel I/O) live in `common/`.
-Install with `pip install -r requirements.txt`; tests run with `pytest`. The narrative
-below is in Indonesian, per the project's primary documentation language.
+Each utility lives in its own folder, uses pandas + openpyxl, ships synthetic sample data,
+and can be tried in one command. Shared helpers (config loading, phone normalization,
+text-safe Excel I/O) live in `common/`. Requires Python 3.10+.
 
----
+## Utilities
 
-# Kisah Bu Sari di PT Maju Jaya
+| # | Utility | What it does | Sample result |
+|---|---------|--------------|---------------|
+| 1 | [01-merge-excel](./01-merge-excel/) | Merge every workbook in a folder into one file | 3 files → **272 rows** (72 + 120 + 80) |
+| 2 | [02-data-cleaner](./02-data-cleaner/) | Standardize names, dates, and phones; drop duplicates and empty rows | 10 dirty rows → **8 clean rows** (1 duplicate + 1 empty removed) |
+| 3 | [03-excel-splitter](./03-excel-splitter/) | Split one workbook into per-value files | 100 rows → **5 files** (Jakarta 23, Makassar 22, Bandung 20, Surabaya 20, Medan 15) |
+| 4 | [04-excel-comparator](./04-excel-comparator/) | Diff two workbook versions cell by cell | **2 added**, **2 deleted**, **6 cells changed** |
+| 5 | [05-data-validator](./05-data-validator/) | Validate rows against YAML rules before import | 12 rows → **5 valid**, **7 with errors**, **17 findings** |
 
-Bu Sari adalah satu-satunya admin di PT Maju Jaya, distributor peralatan IT dengan 15
-cabang. Setiap awal bulan, inbox-nya penuh file Excel: laporan penjualan dari tiap cabang,
-data pelanggan dari tim marketing, laporan nasional dari ERP, dan revisi file dari finance.
-Semua pekerjaan itu sebenarnya sederhana, hanya saja repetitif dan rawan salah ketik.
-
-Repository ini adalah lima bab dari minggu kerja Bu Sari. Setiap utility menyelesaikan satu
-masalah nyata, dengan data contoh sintetis supaya bisa langsung dicoba tanpa menyentuh data
-asli perusahaan.
-
-1. **Senin** — 15 file laporan cabang harus jadi satu file untuk direksi.
-2. **Selasa** — data pelanggan dari form online masih berantakan: nama huruf besar-kecil,
-   tanggal campur format, nomor HP kehilangan angka nol di depan.
-3. **Rabu** — satu laporan nasional harus dipecah per cabang untuk evaluasi tim.
-4. **Kamis** — finance mengirim file revisi; Bu Sari harus tahu persis apa yang berubah.
-5. **Jumat** — data pendaftaran harus divalidasi sebelum masuk sistem.
-
-## Daftar Utilities
-
-| Bab | Utility | Masalah | Hasil pada data contoh |
-|-----|---------|---------|------------------------|
-| 1 | [01-merge-excel](./01-merge-excel/) | Menggabungkan banyak file laporan | 3 file → 272 baris dalam satu file |
-| 2 | [02-data-cleaner](./02-data-cleaner/) | Menstandardisasi nama, tanggal, nomor HP | 10 baris kotor → 8 baris bersih |
-| 3 | [03-excel-splitter](./03-excel-splitter/) | Memecah laporan berdasarkan kolom | 100 baris → 5 file cabang |
-| 4 | [04-excel-comparator](./04-excel-comparator/) | Membandingkan dua versi file | 2 baris baru, 2 dihapus, 6 sel berubah |
-| 5 | [05-data-validator](./05-data-validator/) | Memeriksa kualitas data dengan rules | 12 baris: 5 valid, 7 bermasalah (17 temuan) |
-
-## Before / After
-
-Angka di bawah berasal dari menjalankan demo pada data contoh di repository ini, bukan
-estimasi.
-
-| Pekerjaan | Cara manual | Hasil script |
-|-----------|-------------|--------------|
-| Gabung laporan cabang | buka tiap file, copy-paste, ulangi | 272 baris dari 3 file jadi satu `.xlsx` |
-| Bersihkan data pelanggan | find & replace, hapus duplikat satu per satu | 10 baris → 8 baris; 1 duplikat dan 1 baris kosong terhapus |
-| Pecah laporan nasional | filter per cabang lalu save-as | 100 baris → 5 file (Jakarta 23, Makassar 22, Bandung 20, Surabaya 20, Medan 15) |
-| Bandingkan revisi | scroll dua file berdampingan | 2 baris baru, 2 baris dihapus, 6 sel berubah |
-| Validasi pendaftaran | cek kolom satu per satu | 17 temuan di 7 baris, lengkap dengan nomor barisnya |
-
-Contoh nomor HP yang tadinya bermasalah:
-
-```
-62 814 567 8902  ->  0814-567-8902   (semua 11 digit tetap ada)
-081234567890     ->  0812-3456-7890  (nol di depan tidak hilang)
-```
+The numbers above come from running each demo on the included sample data, not from
+estimates.
 
 ## Quickstart
 
 ```bash
-git clone <url-repository-ini>
+git clone <repository-url>
 cd python-for-work
 
 python -m venv .venv
@@ -71,42 +32,47 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
 
-# Coba salah satu demo
+# Try one demo
 cd 01-merge-excel
 python generate_sample.py
 python merge_excel.py ./sample
 ```
 
-Setiap utility punya `generate_sample.py` sendiri, jadi tidak perlu menyiapkan file Excel
-apa pun. Generator aman dijalankan dari folder utility maupun dari root repository:
+Every utility has its own `generate_sample.py`, so no Excel file needs to be prepared
+beforehand. Generators are safe to run from the utility folder or from the repo root:
 
 ```bash
 python 03-excel-splitter/generate_sample.py
+python 03-excel-splitter/excel_splitter.py            # uses 03-excel-splitter/config.yaml
 ```
 
-## Struktur Repository
+By default, config paths resolve against the utility folder while paths passed on the
+command line resolve against your current working directory.
 
-```
-common/              Helper bersama (config, Excel teks, telepon, logging)
-01-merge-excel/      Gabung banyak file Excel
-02-data-cleaner/     Bersihkan dan standardisasi data
-03-excel-splitter/   Pecah file berdasarkan kolom
-04-excel-comparator/ Bandingkan dua file
-05-data-validator/   Validasi data dengan rules YAML
-tests/               pytest untuk semua utility
-.github/workflows/   CI: ruff + pytest
+## Repository layout
+
+```text
+common/                Shared helpers (config, Excel I/O, phone, logging)
+01-merge-excel/        Merge workbooks from a folder
+02-data-cleaner/       Standardize and deduplicate rows
+03-excel-splitter/     Split one workbook by a column
+04-excel-comparator/   Diff two workbook versions
+05-data-validator/     Validate rows against YAML rules
+tests/                 pytest suite for all utilities
+.github/workflows/     CI: ruff + pytest
 ```
 
-## Testing
+## Development and tests
 
 ```bash
-pip install pytest ruff
+pip install -r requirements.txt pytest ruff
 ruff check .
 pytest -q
 ```
 
-CI menjalankan perintah yang sama pada setiap push dan pull request.
+The GitHub Actions workflow runs the same lint and test commands on every push and pull
+request.
 
-## Lisensi
+## License
 
-MIT License. Lihat [LICENSE](./LICENSE).
+MIT License. See [LICENSE](./LICENSE).
