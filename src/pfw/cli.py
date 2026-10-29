@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from pfw import __version__, clean, diff, merge, sample, split, validate
+from pfw import __version__, clean, diff, load, merge, sample, split, validate
 
 UTILITIES = [
     (merge, "merge", "Merge tabular files from a folder"),
@@ -13,6 +13,7 @@ UTILITIES = [
     (split, "split", "Split a tabular file by column"),
     (diff, "diff", "Diff two file versions"),
     (validate, "validate", "Validate rows against YAML rules"),
+    (load, "load", "Load a file into DuckDB or Postgres"),
 ]
 
 
