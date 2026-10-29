@@ -1,27 +1,25 @@
-# Excel Splitter
+# 03 · Excel Splitter
+
+> Bab 3 kisah [Bu Sari](../README.md): Rabu, laporan nasional dari ERP harus dipecah per
+> cabang untuk evaluasi tim.
 
 Memecah satu file Excel besar menjadi beberapa file berdasarkan nilai kolom tertentu.
 
 ## Cerita
 
-Kamu bekerja sebagai admin di perusahaan distribusi dengan 15 cabang. Setiap bulan, sistem ERP generate satu file laporan penjualan nasional yang berisi semua transaksi dari semua cabang.
+ERP PT Maju Jaya menghasilkan satu file laporan penjualan nasional setiap bulan. Semua
+transaksi dari semua cabang tercampur di dalamnya, sementara manager tiap cabang hanya butuh
+bagiannya sendiri.
 
 ```
-laporan_nasional_jan2024.xlsx
-├── 1000+ baris transaksi
-├── Kolom: No, Tanggal, Cabang, Sales, Produk, Qty, Total, Status
-└── Data dari 15 cabang tercampur
+laporan_nasional.xlsx
+├── 100 baris transaksi (pada data contoh)
+├── Kolom: No, Tanggal, Cabang, Nama Sales, Produk, Qty, Harga Satuan, Total, Status, Metode Bayar
+└── Data 5 cabang tercampur
 ```
 
-Manager tiap cabang minta laporan masing-masing untuk evaluasi tim. Kamu harus:
-1. Filter data per cabang
-2. Copy ke file baru
-3. Save dengan nama cabang
-4. Ulangi 15 kali
-
-**Cara manual:** 15-20 menit, rawan salah filter atau lupa cabang.
-
-**Dengan script ini:** 5 detik. Otomatis pecah jadi 15 file sesuai nama cabang.
+Script ini memecah file tersebut menjadi satu file per cabang, lengkap dengan nama file yang
+aman dipakai di sistem operasi mana pun.
 
 ## Instalasi
 
@@ -31,85 +29,68 @@ pip install -r requirements.txt
 
 ## Cara Menggunakan
 
-### Via Config (Default)
-
-Edit `config.yaml`:
-```yaml
-input: data/laporan.xlsx
-split_by: "Cabang"
-prefix: "laporan_"
-```
-
-Jalankan:
 ```bash
+# pakai config.yaml di folder utility
 python excel_splitter.py
-```
 
-### Via CLI Arguments
-
-```bash
+# file dan kolom lewat CLI
 python excel_splitter.py laporan.xlsx --kolom "Cabang"
-```
 
-### Hybrid (Config + Override)
-
-Setting default di config, override yang perlu via CLI:
-```bash
+# override sebagian setting config
 python excel_splitter.py --kolom "Bulan" --prefix "report_"
 ```
 
-## CLI Options
+Path dari CLI mengikuti current working directory. Path `input` dan `output_folder` di
+dalam config di-resolve relatif terhadap folder utility.
 
-| Option | Shortcut | Deskripsi |
-|--------|----------|-----------|
-| `input` | - | File Excel input (positional) |
+## Opsi CLI
+
+| Opsi | Shortcut | Deskripsi |
+|------|----------|-----------|
+| `input` | – | File Excel input (positional) |
 | `--kolom` | `-k` | Nama kolom untuk split |
 | `--output` | `-o` | Folder output |
 | `--prefix` | `-p` | Prefix nama file output |
 | `--suffix` | `-s` | Suffix nama file output |
-| `--no-header` | - | Tidak sertakan header |
-| `--config` | `-c` | File config custom |
+| `--no-header` | – | Tidak sertakan header di file hasil |
+| `--config` | `-c` | File config YAML (default `config.yaml`) |
 
-## Demo dengan Sample Data
+## Demo (hasil run nyata)
 
 ```bash
 python generate_sample.py
 python excel_splitter.py
 ```
 
-Output:
 ```
-Membaca file: sample/laporan_nasional.xlsx
+Membaca file: /path/ke/repo/03-excel-splitter/sample/laporan_nasional.xlsx
 Total baris: 100
 
 Memecah berdasarkan kolom: Cabang
 Ditemukan 5 grup
 
+  - Bandung.xlsx: 20 baris
   - Jakarta.xlsx: 23 baris
-  - Bandung.xlsx: 18 baris
-  - Surabaya.xlsx: 21 baris
-  - Medan.xlsx: 19 baris
-  - Makassar.xlsx: 19 baris
+  - Makassar.xlsx: 22 baris
+  - Medan.xlsx: 15 baris
+  - Surabaya.xlsx: 20 baris
 
-Berhasil! 5 file dibuat di folder 'output'
+Berhasil! 5 file dibuat di folder '/path/ke/repo/03-excel-splitter/output'
+Total baris: 100
 ```
 
-## Contoh Penggunaan
+Sample dibuat dengan `random.seed(42)`, jadi distribusi di atas selalu sama setiap kali
+`generate_sample.py` dijalankan.
 
-**Split berdasarkan cabang:**
-```bash
-python excel_splitter.py laporan.xlsx -k "Cabang"
+## Nilai Split Kosong
+
+Baris dengan kolom split kosong (`NaN` atau string kosong) **tidak dibuang**. Semua baris
+tersebut masuk ke satu bucket bernama `_kosong.xlsx`, dan jumlahnya dicatat:
+
 ```
+  - _kosong.xlsx: 2 baris
 
-**Split berdasarkan bulan dengan prefix:**
-```bash
-python excel_splitter.py laporan.xlsx -k "Bulan" -p "sales_" -s "_2024"
-# Output: sales_Januari_2024.xlsx, sales_Februari_2024.xlsx, ...
-```
-
-**Split ke folder custom:**
-```bash
-python excel_splitter.py laporan.xlsx -k "Region" -o "./reports/per_region"
+  2 baris tanpa nilai 'Cabang' masuk ke _kosong.xlsx
 ```
 
 ## Konfigurasi YAML
@@ -123,19 +104,14 @@ suffix: ""
 include_header: true
 ```
 
-## Catatan Penting
+## Catatan
 
-- Nama file output diambil dari nilai kolom (karakter invalid otomatis di-replace dengan `_`)
-- CLI arguments selalu override config YAML
-- Jika kolom tidak ditemukan, script akan tampilkan daftar kolom yang tersedia
+- Karakter yang tidak valid untuk nama file diganti `_`.
+- CLI selalu menang atas config.
+- Jika kolom split tidak ditemukan, script menampilkan daftar kolom yang tersedia.
 
-## Pengembangan Selanjutnya
+## Roadmap Singkat
 
-- [ ] Split berdasarkan multiple kolom
-- [ ] Export ke format lain (CSV, JSON)
+- [ ] Split berdasarkan beberapa kolom
+- [ ] Export ke CSV/JSON
 - [ ] Filter data sebelum split
-- [ ] Template nama file custom
-
-## Blog
-
-[Link ke artikel blog] *(coming soon)*
