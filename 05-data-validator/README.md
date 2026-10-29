@@ -1,21 +1,19 @@
-# Data Validator
+# 05 · Data Validator
+
+> Bab 5 kisah [Bu Sari](../README.md): Jumat, data pendaftaran harus lolos pemeriksaan
+> sebelum masuk sistem.
 
 Validasi data Excel berdasarkan rules yang didefinisikan di config YAML.
 
 ## Cerita
 
-Kamu terima data pendaftaran dari berbagai sumber: form online, input manual SPG, import dari sistem lain. Sebelum diproses, perlu dicek dulu kualitas datanya:
+Data pendaftaran PT Maju Jaya datang dari form online, input manual SPG, dan import sistem
+lain. Sebelum diproses, kualitasnya harus dicek: email yang formatnya salah, nomor HP yang
+kurang digit, tanggal lahir yang tidak masuk akal, field wajib yang kosong, NIK yang bukan
+16 digit, dan status di luar pilihan yang tersedia.
 
-- Email yang formatnya salah
-- Nomor HP yang kurang digit
-- Tanggal lahir yang tidak masuk akal
-- Field wajib yang kosong
-- NIK yang tidak 16 digit
-- Status yang tidak sesuai pilihan
-
-**Cara manual:** Filter, sort, cek satu-satu, bikin catatan. Untuk 500 baris bisa 1 jam, dan sering ada yang kelewatan.
-
-**Dengan script ini:** Definisikan rules sekali di config, jalankan kapan saja. Langsung dapat laporan lengkap.
+Daripada memfilter dan memeriksa satu per satu, rules didefinisikan sekali di YAML. Setiap
+temuan dilaporkan lengkap dengan nomor baris, nilai, dan pesannya.
 
 ## Instalasi
 
@@ -25,95 +23,49 @@ pip install -r requirements.txt
 
 ## Cara Menggunakan
 
-### Via Config (Default)
-
-Edit `config.yaml` untuk definisikan rules, lalu:
 ```bash
+# pakai config.yaml di folder utility
 python data_validator.py
-```
 
-### Via CLI
-
-```bash
+# file dan output lewat CLI
 python data_validator.py data.xlsx --output report.xlsx
 ```
 
-## Validation Rules
+Path dari CLI mengikuti current working directory. Path `input` dan `output` di dalam config
+di-resolve relatif terhadap folder utility.
 
-### 1. required
-Field tidak boleh kosong.
-```yaml
-Nama:
-  - type: required
-```
+## Opsi CLI
 
-### 2. email
-Format email harus valid.
-```yaml
-Email:
-  - type: email
-```
+| Opsi | Shortcut | Deskripsi |
+|------|----------|-----------|
+| `input` | – | File Excel input (positional) |
+| `--output` | `-o` | Export hasil ke file Excel |
+| `--config` | `-c` | File config YAML (default `config.yaml`) |
 
-### 3. phone
-Nomor telepon minimal X digit.
-```yaml
-No HP:
-  - type: phone
-    min_digits: 10
-```
+## Rules yang Didukung
 
-### 4. date_range
-Tanggal harus dalam range tertentu.
-```yaml
-Tanggal Lahir:
-  - type: date_range
-    min: "1950-01-01"
-    max: "2010-12-31"
-```
+| Rule | Keterangan | Contoh config |
+|------|-----------|---------------|
+| `required` | Tidak boleh kosong | `- type: required` |
+| `email` | Format email valid | `- type: email` |
+| `phone` | Panjang digit min–max | `- type: phone`<br>`  min_digits: 10`<br>`  max_digits: 15` |
+| `date_range` | Tanggal dalam rentang | `- type: date_range`<br>`  min: "1950-01-01"` |
+| `number_range` | Angka dalam rentang | `- type: number_range`<br>`  min: 17`<br>`  max: 65` |
+| `regex` | Pola kustom | `- type: regex`<br>`  pattern: "^\\d{16}$"` |
+| `in_list` | Nilai dari daftar | `- type: in_list`<br>`  values: ["Aktif", "Nonaktif"]` |
+| `unique` | Tidak boleh duplikat | `- type: unique` |
 
-### 5. number_range
-Angka harus dalam range min-max.
-```yaml
-Umur:
-  - type: number_range
-    min: 17
-    max: 65
-```
+Satu kolom boleh punya beberapa rules, dijalankan berurutan.
 
-### 6. regex
-Validasi dengan custom pattern.
-```yaml
-NIK:
-  - type: regex
-    pattern: "^\\d{16}$"
-    message: "NIK harus 16 digit angka"
-```
-
-### 7. in_list
-Nilai harus salah satu dari list.
-```yaml
-Status:
-  - type: in_list
-    values: ["Aktif", "Nonaktif", "Pending"]
-```
-
-### 8. unique
-Nilai tidak boleh duplikat.
-```yaml
-Email:
-  - type: unique
-```
-
-## Demo dengan Sample Data
+## Demo (hasil run nyata)
 
 ```bash
 python generate_sample.py
 python data_validator.py
 ```
 
-Output:
 ```
-Membaca file: sample/data_pendaftaran.xlsx
+Membaca file: /path/ke/repo/05-data-validator/sample/data_pendaftaran.xlsx
 Total baris: 12
 Kolom: Nama Lengkap, Email, No HP, Tanggal Lahir, Umur, NIK, Status
 
@@ -125,89 +77,60 @@ LAPORAN VALIDASI
 
 Ringkasan:
   Total baris : 12
-  Valid       : 4
-  Error       : 8 baris (15 masalah)
+  Valid       : 5
+  Error       : 7 baris (17 masalah)
 
---- DETAIL ERROR (15) ---
-  Baris 3: Nama Lengkap tidak boleh kosong
-  Baris 8: Nama Lengkap tidak boleh kosong
-  Baris 2: Format email tidak valid: dewi@email
-  Baris 5: Email tidak boleh kosong
-  ...
+--- DETAIL ERROR (17) ---
+  Baris 4: Nama Lengkap tidak boleh kosong
+  Baris 9: Nama Lengkap tidak boleh kosong
+  Baris 6: Email tidak boleh kosong
+  Baris 3: Format email tidak valid: dewi@email
+  Baris 8: Format email tidak valid: joko@@email.com
+  Baris 3: No HP kurang dari 10 digit: 08123456
+  Baris 7: No HP kurang dari 10 digit: 0812
+  Baris 4: Tanggal sebelum 1950-01-01: 1940-01-01
+  Baris 6: Tanggal setelah 2010-12-31: 2015-06-10
+  Baris 10: Tanggal setelah 2010-12-31: 2020-01-01
+  Baris 6: Nilai kurang dari 17: 15
+  Baris 9: Nilai lebih dari 65: 70
+  Baris 4: NIK harus 16 digit angka
+  Baris 7: NIK harus 16 digit angka
+  Baris 10: NIK harus 16 digit angka
+  Baris 6: Nilai "Tidak Valid" tidak valid. Harus salah satu dari: ['Aktif', 'Nonaktif', 'Pending']
+  Baris 9: Nilai "Batal" tidak valid. Harus salah satu dari: ['Aktif', 'Nonaktif', 'Pending']
 
-Laporan Excel disimpan ke: output/validation_report.xlsx
+Laporan Excel disimpan ke: /path/ke/repo/05-data-validator/output/validation_report.xlsx
 ```
 
-## Output Excel Report
+## Nomor HP Tetap Teks
 
-File Excel output berisi 3 sheet:
+Kolom yang punya rule `phone` dibaca sebagai teks, sehingga nilai di laporan tetap
+`08123456`, bukan `8123456`. Panjang digit diperiksa setelah normalisasi awalan `62`/`8`
+menjadi `0`, dengan batas bawah `min_digits` dan batas atas `max_digits` (default 10–15).
+Laporan Excel juga menulis kolom tersebut sebagai teks (number format `@`).
 
-1. **Summary** - Ringkasan jumlah valid/error
-2. **Detail Error** - List semua error dengan baris, kolom, nilai, dan pesan
-3. **Data** - Data asli dengan highlight merah pada cell yang error
+## Output Excel
 
-## CLI Options
+File laporan berisi 3 sheet:
 
-| Option | Shortcut | Deskripsi |
-|--------|----------|-----------|
-| `input` | - | File Excel input (positional) |
-| `--output` | `-o` | Export hasil ke file Excel |
-| `--config` | `-c` | File config custom |
+1. **Summary** — jumlah baris, valid, baris error, dan total masalah
+2. **Detail Error** — baris, kolom, nilai, rule, dan pesan
+3. **Data** — data asli dengan highlight merah pada sel yang bermasalah
 
 ## Contoh Config Lengkap
 
-```yaml
-input: data/pendaftaran.xlsx
-output: output/validation_report.xlsx
+Ada di [`config.yaml`](./config.yaml) pada folder ini, termasuk `min_digits` dan
+`max_digits` untuk kolom `No HP`.
 
-rules:
-  Nama Lengkap:
-    - type: required
+## Catatan
 
-  Email:
-    - type: required
-    - type: email
-    - type: unique
+- Jika kolom yang diminta tidak ditemukan, validasi kolom tersebut dilewati dengan
+  peringatan.
+- Sel kosong tidak divalidasi, kecuali oleh rule `required`.
+- Rules dijalankan berurutan sesuai urutan di YAML.
 
-  No HP:
-    - type: required
-    - type: phone
-      min_digits: 10
+## Roadmap Singkat
 
-  Tanggal Lahir:
-    - type: date_range
-      min: "1950-01-01"
-      max: "2010-12-31"
-
-  Umur:
-    - type: number_range
-      min: 17
-      max: 65
-
-  NIK:
-    - type: regex
-      pattern: "^\\d{16}$"
-      message: "NIK harus 16 digit angka"
-
-  Status:
-    - type: in_list
-      values: ["Aktif", "Nonaktif", "Pending"]
-```
-
-## Catatan Penting
-
-- Satu kolom bisa punya multiple rules
-- Rules dijalankan berurutan
-- Jika kolom tidak ditemukan di file, validasi untuk kolom tersebut di-skip
-- Cell kosong tidak divalidasi (kecuali rule `required`)
-
-## Pengembangan Selanjutnya
-
-- [ ] Custom error message per rule
-- [ ] Validasi antar kolom (misal: tanggal_mulai < tanggal_selesai)
+- [ ] Validasi antar kolom (mis. tanggal mulai < tanggal selesai)
 - [ ] Import rules dari file terpisah
 - [ ] Export hanya baris yang error
-
-## Blog
-
-[Link ke artikel blog] *(coming soon)*
