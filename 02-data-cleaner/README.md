@@ -1,41 +1,34 @@
-# Data Cleaner
+# 02 · Data Cleaner
+
+> Bab 2 kisah [Bu Sari](../README.md): Selasa, data pelanggan dari form online harus
+> dirapikan sebelum dipakai tim marketing.
 
 Membersihkan dan menstandardisasi data Excel berdasarkan konfigurasi YAML.
 
 ## Cerita
 
-Kamu bekerja sebagai data analyst di perusahaan retail. Tim marketing baru saja selesai event promo dan mengumpulkan data pelanggan dari berbagai sumber: form online, pendaftaran di booth, dan input manual dari SPG.
-
-Masalahnya? Data yang masuk berantakan:
+Data pelanggan PT Maju Jaya datang dari banyak sumber: form online, input manual SPG, dan
+export sistem lama. Hasilnya campur aduk:
 
 ```
-| Nama Lengkap        | Tanggal Lahir | No HP              |
-|---------------------|---------------|--------------------|
-|   BUDI SANTOSO      | 15/01/1990    | 081234567890       |
-| siti nurhaliza      | 1985-03-20    | +62 812 3456 7891  |
-| AHMAD   DAHLAN      | 05 Mei 2000   | 0813-4567-8901     |
-|   dewi  lestari     | 12-12-1995    | 62 814 567 8902    |
-| BUDI SANTOSO        | 15/01/1990    | 081234567890       |  <- duplikat!
-|                     | 01-01-2000    | 0817 4567 8905     |  <- nama kosong!
+| Nama Lengkap     | Tanggal Lahir | No HP              |
+|------------------|---------------|--------------------|
+|   BUDI SANTOSO   | 15/01/1990    | 081234567890       |
+| siti nurhaliza   | 1985-03-20    | +62 812 3456 7891  |
+| AHMAD   DAHLAN   | 05 Mei 2000   | 0813-4567-8901     |
+|   dewi  lestari  | 12-12-1995    | 62 814 567 8902    |
+| BUDI SANTOSO     | 15/01/1990    | 081234567890       |  <- duplikat
+|                  | 01-01-2000    | 0817 4567 8905     |  <- nama kosong
 ```
 
-Masalah yang sering ditemui:
-- **Nama**: Ada yang UPPERCASE, lowercase, spasi berlebih
-- **Tanggal**: Format campur aduk (DD/MM/YYYY, YYYY-MM-DD, "05 Mei 2000")
-- **No HP**: Ada yang pakai +62, 62, 0, dengan/tanpa separator
-- **Duplikat**: Data yang sama diinput berkali-kali
-- **Data kosong**: Field penting tidak diisi
+Masalah yang ditangani:
 
-**Cara manual:**
-1. Sort data, cari duplikat, hapus satu-satu
-2. Find & replace untuk standardisasi nama
-3. Pakai formula Excel untuk format tanggal
-4. Text to columns + concatenate untuk nomor HP
-5. Filter dan hapus baris kosong
-
-Waktu: **30-60 menit** untuk 500 baris. Dan harus diulang setiap ada data baru.
-
-**Dengan script ini:** Definisikan aturan sekali di config, jalankan kapan saja. 5 detik selesai.
+- **Nama** — huruf besar/kecil tidak konsisten, spasi berlebih
+- **Tanggal** — format campur (`DD/MM/YYYY`, `YYYY-MM-DD`, `05 Mei 2000`)
+- **No HP** — awalan `+62`, `62`, `0`, dengan/tanpa pemisah; nol di depan bisa hilang
+  jika Excel menyimpan nomor sebagai angka
+- **Duplikat** — baris yang sama diinput berkali-kali
+- **Data kosong** — kolom penting tidak diisi
 
 ## Instalasi
 
@@ -45,66 +38,51 @@ pip install -r requirements.txt
 
 ## Cara Menggunakan
 
-1. Siapkan file Excel yang mau dibersihkan
-2. Edit `config.yaml` sesuai kebutuhan
-3. Jalankan script:
-
 ```bash
-python data_cleaner.py
+python data_cleaner.py                 # config.yaml di folder utility
+python data_cleaner.py config.yaml     # positional
+python data_cleaner.py -c config.yaml  # opsi eksplisit
 ```
 
-Atau dengan config file custom:
-
-```bash
-python data_cleaner.py config_custom.yaml
-```
+Path file config dari CLI mengikuti current working directory. Path `input` dan `output`
+di dalam config di-resolve relatif terhadap folder utility, atau bisa diisi absolut.
 
 ## Konfigurasi
-
-Edit file `config.yaml` untuk mengatur aturan cleaning:
 
 ```yaml
 input: sample/data_kotor.xlsx
 output: output/data_bersih.xlsx
 
 cleaning:
-  # Standardisasi nama
   nama:
     kolom: "Nama Lengkap"
-    format: "title"  # title, upper, lower
+    format: "title"   # title, upper, lower
     trim: true
 
-  # Standardisasi format tanggal
   tanggal:
     kolom: "Tanggal Lahir"
     format: "%d-%m-%Y"
 
-  # Standardisasi nomor HP
   telepon:
     kolom: "No HP"
-    format: "0xxx-xxxx-xxxx"
+    format: "0xxx-xxxx-xxxx"   # atau "+62xxx-xxxx-xxxx"
 
-  # Hapus duplikat
   duplikat:
     kolom: ["Nama Lengkap", "No HP"]
 
-  # Hapus baris kosong
   hapus_kosong:
     kolom: ["Nama Lengkap"]
 ```
 
-## Demo dengan Sample Data
-
-Generate sample data kotor untuk testing:
+## Demo (hasil run nyata)
 
 ```bash
 python generate_sample.py
 python data_cleaner.py
 ```
 
-Output:
 ```
-Membaca file: sample/data_kotor.xlsx
+Membaca file: /path/ke/repo/02-data-cleaner/sample/data_kotor.xlsx
 Total baris: 10
 
 Proses cleaning:
@@ -112,49 +90,41 @@ Proses cleaning:
   Tanggal: 10 data di-format ke %d-%m-%Y
   Telepon: 10 data di-format
   Duplikat: 1 baris dihapus
-  Baris kosong: 0 baris dihapus
+  Baris kosong: 1 baris dihapus
 
-Berhasil! Data bersih disimpan ke: output/data_bersih.xlsx
-Total baris setelah cleaning: 9
+Berhasil! Data bersih disimpan ke: /path/ke/repo/02-data-cleaner/output/data_bersih.xlsx
+Total baris setelah cleaning: 8
 ```
 
-## Fitur Cleaning
+## Format Nomor HP
 
-### 1. Standardisasi Nama
-- Hapus spasi berlebih di awal, akhir, dan tengah
-- Format: Title Case, UPPERCASE, atau lowercase
+Nomor dinormalisasi ke awalan `0`, lalu diformat **tanpa memotong digit**:
 
-### 2. Standardisasi Tanggal
-- Support berbagai format input (DD/MM/YYYY, YYYY-MM-DD, dll)
-- Support format Indonesia ("05 Mei 2000", "30 Juni 1988")
-- Output format bisa dikustomisasi
+| Input | Digit hasil normalisasi | Output |
+|-------|-------------------------|--------|
+| `081234567890` | `081234567890` (12) | `0812-3456-7890` |
+| `+62 812 3456 7891` | `081234567891` (12) | `0812-3456-7891` |
+| `62 814 567 8902` | `08145678902` (11) | `0814-567-8902` |
 
-### 3. Standardisasi Nomor Telepon
-- Normalisasi prefix (+62, 62, 0)
-- Format output: `0xxx-xxxx-xxxx` atau `+62xxx-xxxx-xxxx`
+Aturan:
 
-### 4. Hapus Duplikat
-- Deteksi duplikat berdasarkan kombinasi kolom
-- Keep baris pertama, hapus sisanya
+- 12 digit → `0xxx-xxxx-xxxx`
+- 11 digit → `0xxx-xxx-xxxx`
+- panjang lain (10–15) → grup 4 digit dari kiri, sisa digit tetap disertakan
+- di luar 10–15 digit → nilai asli dipertahankan dan dihitung dalam peringatan
 
-### 5. Hapus Baris Kosong
-- Hapus baris jika kolom tertentu kosong
+Kolom telepon dibaca dan ditulis sebagai **teks** (`dtype=str` + number format `@`) supaya
+angka nol di depan tidak berubah menjadi angka.
 
-## Catatan Penting
+## Catatan
 
-- Kolom yang tidak ada di config akan dibiarkan apa adanya
-- Jika kolom tidak ditemukan di file, proses cleaning untuk kolom tersebut di-skip
-- File output akan di-overwrite jika sudah ada
+- Kolom yang tidak ada di config dibiarkan apa adanya.
+- Jika kolom yang diminta tidak ditemukan, cleaning untuk kolom itu dilewati dengan
+  peringatan.
+- File output ditimpa jika sudah ada.
 
-## Pengembangan Selanjutnya
+## Roadmap Singkat
 
-Fitur yang bisa ditambahkan:
 - [ ] Validasi format email
-- [ ] Standardisasi alamat
-- [ ] Mapping nilai (misal: "JKT" -> "Jakarta")
-- [ ] Export laporan cleaning ke file terpisah
-- [ ] Support multiple sheet
-
-## Blog
-
-[Link ke artikel blog] *(coming soon)*
+- [ ] Mapping nilai (mis. `JKT` → `Jakarta`)
+- [ ] Export laporan cleaning terpisah
