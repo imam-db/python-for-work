@@ -24,3 +24,13 @@ def resolve_path(base_dir: str | Path, value: str | Path) -> Path:
     if path.is_absolute():
         return path
     return Path(base_dir) / path
+
+
+def resolve_config_path(value: str | Path, base_dir: str | Path) -> Path:
+    """Cari file config: absolut, lalu cwd, lalu folder utility."""
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    if path.exists():
+        return path
+    return Path(base_dir) / path
