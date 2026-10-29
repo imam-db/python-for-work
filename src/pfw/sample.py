@@ -479,12 +479,46 @@ def generate_validate(output_path: str | Path | None = None) -> Path:
     return path
 
 
+
+def build_load_data(seed: int = 42) -> pd.DataFrame:
+    """Build a small sales extract for the load demo."""
+    rng = random.Random(seed)
+    products = ["Kopi Arabika 1kg", "Teh Hijau 500g", "Gula Aren 1kg", "Susu UHT 1L"]
+    rows = []
+    for index in range(1, 21):
+        product = rng.choice(products)
+        qty = rng.randint(1, 12)
+        price = rng.choice([18000, 25000, 32000, 15000])
+        rows.append(
+            {
+                "sku": f"SKU-{index:03d}",
+                "product": product,
+                "qty": qty,
+                "unit_price": price,
+                "total": qty * price,
+                "warehouse": rng.choice(["Jakarta", "Bandung", "Surabaya"]),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def generate_load(output_path: str | Path | None = None) -> Path:
+    """Write the load sample CSV."""
+    path = Path(output_path) if output_path else DEFAULT_SAMPLE_DIR / "sales_daily.csv"
+    frame = build_load_data()
+    write_table(frame, path)
+    log.info("Sample data created: %s", path)
+    log.info("Total rows: %s", len(frame))
+    return path
+
+
 GENERATORS = {
     "merge": generate_merge,
     "clean": generate_clean,
     "split": generate_split,
     "diff": generate_diff,
     "validate": generate_validate,
+    "load": generate_load,
 }
 
 
