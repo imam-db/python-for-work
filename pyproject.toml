@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "python-for-work"
 version = "1.0.0"
-description = "Kumpulan utility Python untuk pekerjaan Excel sehari-hari"
+description = "Everyday Excel utilities for analysts and operations teams"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -23,8 +23,11 @@ dev = [
     "ruff>=0.6",
 ]
 
+[project.scripts]
+pfw = "pfw.cli:main"
+
 [tool.setuptools]
-packages = ["common"]
+packages = ["common", "pfw"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
