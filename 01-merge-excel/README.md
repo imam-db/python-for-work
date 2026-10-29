@@ -1,100 +1,98 @@
 # 01 · Merge Excel
 
-> Bab 1 kisah [Bu Sari](../README.md): Senin pagi, 15 laporan cabang harus jadi satu file
-> untuk direksi.
+Combine every `.xlsx` workbook in a folder into a single file.
 
-Menggabungkan beberapa file Excel dalam satu folder menjadi satu file.
+## Story
 
-## Cerita
+Raka works in operations at **PT Sinar Teknologi Nusantara**, an IT distributor whose Jakarta
+head office collects a sales workbook from every city branch at the start of each month. The
+files all share the same columns, but they arrive separately from Bandung, Surabaya, and the
+rest. Before the Monday directors' meeting, Raka needs one sheet — not a folder of tabs.
 
-PT Maju Jaya punya 15 cabang. Setiap awal bulan, masing-masing cabang mengirim laporan
-penjualan dalam format Excel yang sama. Bu Sari harus menggabungkannya sebelum rapat
-direksi.
+The sample uses three branch files with **272 transactions** in total:
 
-Untuk contoh di repository ini, tersedia 3 file cabang (Jakarta, Bandung, Surabaya) dengan
-total **272 transaksi**:
-
-```
+```text
 sample/
-├── cabang_jakarta.xlsx    (120 transaksi)
-├── cabang_bandung.xlsx    (72 transaksi)
-└── cabang_surabaya.xlsx   (80 transaksi)
+├── cabang_jakarta.xlsx    (120 transactions)
+├── cabang_bandung.xlsx    (72 transactions)
+└── cabang_surabaya.xlsx   (80 transactions)
 ```
 
-Setiap file berisi kolom yang sama:
+Columns are identical across the files:
 
 | No | Tanggal | Nama Sales | Produk | Qty | Harga Satuan | Total | Status | Metode Bayar |
 |----|---------|------------|--------|-----|--------------|-------|--------|--------------|
-| 1 | 2024-01-05 | Budi Santoso | Laptop ASUS ROG | 2 | 16.500.000 | 33.000.000 | Lunas | Transfer |
-| 2 | 2024-01-05 | Dewi Lestari | Monitor LG 27 inch | 5 | 4.200.000 | 21.000.000 | Cicilan | Kartu Kredit |
-| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+| 1 | 2024-01-05 | Budi Santoso | Laptop ASUS ROG | 2 | 16500000 | 33000000 | Lunas | Transfer |
+| 2 | 2024-01-05 | Dewi Lestari | Monitor LG 27 inch | 5 | 4200000 | 21000000 | Cicilan | Kartu Kredit |
 
-## Instalasi
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cara Menggunakan
+## Usage
 
 ```bash
-python merge_excel.py <folder_input> [file_output]
+python merge_excel.py <input_folder> [output_file]
 ```
 
-- `folder_input` — folder berisi file `.xlsx` (wajib)
-- `file_output` — file hasil gabungan (opsional). Default:
-  `output/hasil_gabungan.xlsx` di folder utility ini.
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `input_folder` | yes | Folder containing `.xlsx` files |
+| `output_file` | no | Merged output path. Default: `output/hasil_gabungan.xlsx` next to the script |
 
-Path dari CLI mengikuti current working directory, jadi bisa dijalankan dari mana saja:
+Command-line paths resolve against the current working directory, so the script can be run
+from anywhere:
 
 ```bash
-# dari folder utility
+# from the utility folder
 python merge_excel.py ./sample
 
-# dari root repository
+# from the repository root
 python 01-merge-excel/merge_excel.py ./01-merge-excel/sample
 ```
 
-## Demo (hasil run nyata)
+## Demo output
 
 ```bash
 python generate_sample.py
 python merge_excel.py ./sample
 ```
 
-```
+```text
 Ditemukan 3 file Excel di folder ./sample
 - Memproses: cabang_bandung.xlsx (72 baris)
 - Memproses: cabang_jakarta.xlsx (120 baris)
 - Memproses: cabang_surabaya.xlsx (80 baris)
 
-Berhasil! Total 272 baris dari 3 file digabungkan ke /path/ke/repo/01-merge-excel/output/hasil_gabungan.xlsx
+Berhasil! Total 272 baris dari 3 file digabungkan ke .../01-merge-excel/output/hasil_gabungan.xlsx
 ```
 
-## Perilaku Penggabungan
+## How merging works
 
-- Kolom **Cabang** ditambahkan otomatis dari nama file (`cabang_jakarta.xlsx` → `Jakarta`).
-- File dengan **0 baris** dilewati dan dicatat sebagai peringatan.
-- Jika kolom antar file **berbeda**, file tetap digabung (outer join) dan muncul peringatan
-  berisi kolom yang hilang/tambahan. Baris dari file tersebut akan berisi `NaN` pada kolom
-  yang tidak dimilikinya, sehingga masalahnya terlihat jelas.
-- File diproses dalam urutan nama (sort) supaya hasilnya konsisten.
+- A **Cabang** column is added from the filename: `cabang_jakarta.xlsx` → `Jakarta`.
+- A file with **0 rows** is skipped and reported as a warning.
+- If column sets differ, the file is still included (outer concat) and a warning lists the
+  missing and extra columns. Rows from that file get `NaN` in columns they do not have, so
+  the gap is visible.
+- Files are processed in sorted filename order for consistent output.
 
-Contoh peringatan:
+Example warning:
 
-```
+```text
 - PERINGATAN: kolom cabang_bandung.xlsx berbeda (hilang: ['Status'], tambahan: -);
   tetap digabung, kolom yang tidak ada akan berisi NaN
 ```
 
-## Catatan
+## Notes
 
-- Hanya membaca sheet pertama.
-- Format `.xls` (Excel lama) belum didukung; konversi dulu ke `.xlsx`.
-- Nomor urut kolom `No` mengikuti file asli, belum di-reset setelah merge.
+- Only the first sheet of each workbook is read.
+- Legacy `.xls` files are not supported; convert them to `.xlsx` first.
+- The `No` column keeps the original per-file numbering; it is not renumbered after merging.
 
-## Roadmap Singkat
+## Ideas
 
-- [ ] Reset nomor urut setelah merge
-- [ ] Filter file berdasarkan pola nama
-- [ ] Dukungan multiple sheet
+- Renumber `No` after the merge.
+- Filter input files by filename pattern.
+- Read multiple sheets per workbook.
