@@ -27,14 +27,24 @@ Columns are identical across the files:
 
 ## Install
 
+Dependencies live in the repository root:
+
 ```bash
 pip install -r requirements.txt
+# or, for the pfw command too:
+pip install -e .
 ```
 
 ## Usage
 
 ```bash
 python merge_excel.py <input_folder> [output_file]
+```
+
+The same command is available through `pfw`:
+
+```bash
+pfw merge <input_folder> [output_file]
 ```
 
 | Argument | Required | Description |

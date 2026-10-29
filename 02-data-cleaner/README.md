@@ -23,8 +23,12 @@ A typical sheet before cleaning:
 
 ## Install
 
+Dependencies live in the repository root:
+
 ```bash
 pip install -r requirements.txt
+# or, for the pfw command too:
+pip install -e .
 ```
 
 ## Usage
@@ -33,6 +37,13 @@ pip install -r requirements.txt
 python data_cleaner.py                 # uses config.yaml in the utility folder
 python data_cleaner.py config.yaml     # positional config path
 python data_cleaner.py -c config.yaml  # explicit option
+```
+
+The same options are available through `pfw`:
+
+```bash
+pfw clean                              # uses config.yaml in the utility folder
+pfw clean -c my_config.yaml
 ```
 
 Config paths passed on the command line resolve against the current working directory.
