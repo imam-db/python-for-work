@@ -423,10 +423,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     setup_logging()
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     script_dir = Path(__file__).parent
     config_path = resolve_config_path(args.config, script_dir)

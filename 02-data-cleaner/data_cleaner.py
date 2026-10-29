@@ -278,9 +278,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     setup_logging()
-    args = build_parser().parse_args()
+    args = build_parser().parse_args(argv)
 
     explicit_config = args.config_option or args.config_file
     if explicit_config:
