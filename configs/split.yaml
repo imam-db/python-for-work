@@ -1,0 +1,9 @@
+# Excel Splitter defaults
+# Relative paths resolve against the current working directory.
+
+input: sample/laporan_nasional.xlsx
+output_folder: output/split
+split_by: "Cabang"
+prefix: ""
+suffix: ""
+include_header: true
