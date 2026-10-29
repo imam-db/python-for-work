@@ -31,6 +31,8 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
+# or, for the pfw command as well:
+# pip install -e .
 
 # Try one demo
 cd 01-merge-excel
@@ -49,10 +51,36 @@ python 03-excel-splitter/excel_splitter.py            # uses 03-excel-splitter/c
 By default, config paths resolve against the utility folder while paths passed on the
 command line resolve against your current working directory.
 
+## CLI
+
+Install the package once to get the `pfw` command:
+
+```bash
+pip install -e .
+
+pfw sample merge
+pfw merge ./01-merge-excel/sample
+pfw clean
+pfw split
+pfw compare
+pfw validate
+```
+
+Each command accepts the same arguments as the classic script, and `pfw <command> --help`
+shows its options. Running a script directly still works unchanged:
+
+```bash
+python 01-merge-excel/merge_excel.py ./01-merge-excel/sample
+```
+
+Without installing, `python -m pfw --help` also works when the repository root is on
+`PYTHONPATH`. Use `pfw sample <name>` to generate demo data for any utility.
+
 ## Repository layout
 
 ```text
 common/                Shared helpers (config, Excel I/O, phone, logging)
+pfw/                   Unified CLI (pfw <command>)
 01-merge-excel/        Merge workbooks from a folder
 02-data-cleaner/       Standardize and deduplicate rows
 03-excel-splitter/     Split one workbook by a column
@@ -65,7 +93,7 @@ tests/                 pytest suite for all utilities
 ## Development and tests
 
 ```bash
-pip install -r requirements.txt pytest ruff
+pip install -e ".[dev]"
 ruff check .
 pytest -q
 ```

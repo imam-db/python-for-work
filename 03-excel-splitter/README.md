@@ -20,8 +20,12 @@ laporan_nasional.xlsx
 
 ## Install
 
+Dependencies live in the repository root:
+
 ```bash
 pip install -r requirements.txt
+# or, for the pfw command too:
+pip install -e .
 ```
 
 ## Usage
@@ -35,6 +39,13 @@ python excel_splitter.py laporan.xlsx --kolom "Cabang"
 
 # override part of the config
 python excel_splitter.py --kolom "Bulan" --prefix "report_"
+```
+
+The same options are available through `pfw`:
+
+```bash
+pfw split
+pfw split laporan.xlsx --kolom "Cabang"
 ```
 
 Command-line paths resolve against the current working directory. `input` and

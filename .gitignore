@@ -36,3 +36,6 @@ Thumbs.db
 # Tooling
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
+build/
+dist/
