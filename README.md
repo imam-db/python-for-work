@@ -15,6 +15,7 @@ Requires Python 3.11+.
 | [split](docs/split.md) | Split one tabular file by a column value | 100 rows → **5** files |
 | [diff](docs/diff.md) | Diff two file versions cell by cell | **2** added, **2** deleted, **6** changed |
 | [validate](docs/validate.md) | Validate rows against YAML rules before import | **5** valid, **7** error rows, **17** findings |
+| [load](docs/load.md) | Load a file into DuckDB or Postgres | **20** rows into DuckDB |
 
 Numbers come from running each demo on the included sample generators, not estimates.
 
@@ -27,14 +28,17 @@ flowchart LR
   CLI --> S[split]
   CLI --> D[diff]
   CLI --> V[validate]
+  CLI --> L[load]
   CLI --> Sample[sample]
   M --> IO["pfw.common.io"]
   C --> IO
   S --> IO
   D --> IO
   V --> IO
+  L --> IO
   Sample --> IO
   IO --> Files["xlsx / csv / parquet"]
+  L --> DB["DuckDB / Postgres"]
   C --> YAML["configs/*.yaml"]
   V --> YAML
   S --> YAML
@@ -52,7 +56,8 @@ Other commands follow the same pattern: `pfw sample <utility>`, then `pfw <utili
 See `pfw --help` and each page under [docs/](docs/).
 
 YAML configs (kept where they add real value) live in `configs/` for **clean**, **validate**,
-and optional **split** defaults. **merge** and **diff** are CLI-arg driven.
+and optional **split** defaults. **merge**, **diff**, and **load** are CLI-arg driven.
+Postgres support is an optional extra: `pip install 'python-for-work[postgres]'`.
 
 ## Repository layout
 

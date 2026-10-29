@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-for-work"
-version = "1.1.0"
+version = "1.2.0"
 description = "Python utilities for automating office data work"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,10 +16,12 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dateutil>=2.8",
     "pyarrow>=14.0",
+    "duckdb>=1.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+postgres = ["psycopg[binary]>=3.1"]
 
 [project.scripts]
 pfw = "pfw.cli:main"
