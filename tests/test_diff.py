@@ -33,4 +33,4 @@ def test_duplicate_keys_emit_warning(caplog):
         result = compare_dataframes(df_old, df_new, "No")
 
     assert result["summary"]["changed_count"] == 0
-    assert any("duplikat" in record.message.lower() for record in caplog.records)
+    assert any("duplicate" in record.message.lower() for record in caplog.records)

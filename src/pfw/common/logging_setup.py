@@ -1,13 +1,14 @@
-"""Konfigurasi logging konsisten untuk semua utility CLI."""
+"""Shared logging setup for every pfw CLI utility."""
 
 import logging
 import sys
 
 
 def setup_logging(level: int = logging.INFO) -> logging.Logger:
-    """Siapkan logger ``pfw`` dengan output ke stdout.
+    """Configure the ``pfw`` logger to write plain messages to stdout.
 
-    Format sengaja tanpa prefix agar console UX tetap sama seperti versi print.
+    The formatter intentionally omits prefixes so console UX matches the older
+    print-based tools.
     """
     logger = logging.getLogger("pfw")
     logger.setLevel(level)
@@ -19,7 +20,7 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
 
 
 def get_logger(name: str | None = None) -> logging.Logger:
-    """Ambil logger anak dari ``pfw``."""
+    """Return a child logger under ``pfw``."""
     if name:
         return logging.getLogger(f"pfw.{name}")
     return logging.getLogger("pfw")

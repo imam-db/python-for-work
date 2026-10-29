@@ -1,4 +1,4 @@
-"""Split a workbook into one file per value of a column."""
+"""Split a tabular file into one file per value of a column."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ EMPTY_BUCKET_NAME = "_kosong"
 
 
 def sanitize_filename(name: str) -> str:
-    """Bersihkan nama file dari karakter yang tidak valid."""
+    """Strip characters that are invalid in file names."""
     invalid_chars = '<>:"/\\|?*'
     for char in invalid_chars:
         name = str(name).replace(char, "_")
@@ -33,24 +33,24 @@ def split_excel(
     suffix: str = "",
     include_header: bool = True,
 ) -> list[dict]:
-    """Memecah file Excel berdasarkan nilai kolom tertentu.
+    """Split a tabular file by the values of one column.
 
-    Baris dengan nilai split kosong/NaN tetap disertakan ke file
-    ``_kosong.xlsx`` (groupby memakai ``dropna=False``).
+    Rows with a blank/NaN split value are written to ``_kosong.xlsx``
+    (groupby uses ``dropna=False``).
     """
     input_path = Path(input_file)
 
     if not input_path.exists():
-        raise FileNotFoundError(f"File '{input_file}' tidak ditemukan")
+        raise FileNotFoundError(f"File '{input_file}' not found")
 
-    log.info("Membaca file: %s", input_file)
+    log.info("Reading file: %s", input_file)
     df = read_table(input_path)
-    log.info("Total baris: %s", len(df))
+    log.info("Total rows: %s", len(df))
 
     if split_by not in df.columns:
         raise ValueError(
-            f"Kolom '{split_by}' tidak ditemukan. "
-            f"Kolom yang tersedia: {', '.join(map(str, df.columns))}"
+            f"Column '{split_by}' not found. "
+            f"Available columns: {', '.join(map(str, df.columns))}"
         )
 
     output_path = Path(output_folder)
@@ -58,7 +58,7 @@ def split_excel(
 
     groups = df.groupby(split_by, dropna=False)
 
-    # Gabungkan NaN dan string kosong ke satu bucket supaya tidak saling timpa.
+    # Merge NaN and blank strings into one bucket so they do not overwrite each other.
     buckets: dict[str, list[pd.DataFrame]] = {}
     for group_name, group_df in groups:
         if pd.isna(group_name) or str(group_name).strip() == "":
@@ -68,8 +68,8 @@ def split_excel(
         buckets.setdefault(bucket_name, []).append(group_df)
 
     log.info("")
-    log.info("Memecah berdasarkan kolom: %s", split_by)
-    log.info("Ditemukan %s grup", len(buckets))
+    log.info("Splitting by column: %s", split_by)
+    log.info("Found %s group(s)", len(buckets))
     log.info("")
 
     results = []
@@ -78,52 +78,53 @@ def split_excel(
         group_df = pd.concat(frames, ignore_index=True) if len(frames) > 1 else frames[0]
         filename = f"{prefix}{bucket_name}{suffix}.xlsx"
         filepath = output_path / filename
-        if include_header:
-            write_table(group_df, filepath)
-        else:
-            group_df.to_excel(filepath, index=False, header=False)
+        write_table(group_df, filepath, header=include_header)
 
         is_empty = bucket_name == EMPTY_BUCKET_NAME
         if is_empty:
             empty_rows += len(group_df)
 
         results.append({"name": bucket_name, "file": filename, "rows": len(group_df)})
-        log.info("  - %s: %s baris", filename, len(group_df))
+        log.info("  - %s: %s rows", filename, len(group_df))
 
     if empty_rows:
         log.info("")
         log.info(
-            "  %s baris tanpa nilai '%s' masuk ke %s.xlsx",
+            "  %s row(s) without a '%s' value went to %s.xlsx",
             empty_rows,
             split_by,
             EMPTY_BUCKET_NAME,
         )
 
     log.info("")
-    log.info("Berhasil! %s file dibuat di folder '%s'", len(results), output_folder)
-    log.info("Total baris: %s", sum(r["rows"] for r in results))
+    log.info("Done! Created %s file(s) in folder '%s'", len(results), output_folder)
+    log.info("Total rows: %s", sum(r["rows"] for r in results))
 
     return results
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("input", nargs="?", help="File Excel input")
-    parser.add_argument("--kolom", "-k", help="Nama kolom untuk split")
-    parser.add_argument("--output", "-o", help="Folder output")
-    parser.add_argument("--prefix", "-p", help="Prefix nama file output")
-    parser.add_argument("--suffix", "-s", help="Suffix nama file output")
-    parser.add_argument("--no-header", action="store_true", help="Tidak sertakan header")
+    parser.add_argument("input", nargs="?", help="Input tabular file")
+    parser.add_argument("--kolom", "-k", help="Column name to split by")
+    parser.add_argument("--output", "-o", help="Output folder")
+    parser.add_argument("--prefix", "-p", help="Prefix for output file names")
+    parser.add_argument("--suffix", "-s", help="Suffix for output file names")
+    parser.add_argument(
+        "--no-header",
+        action="store_true",
+        help="Omit the header row in each output file",
+    )
     parser.add_argument(
         "--config",
         "-c",
-        help="File konfigurasi YAML (default: configs/split.yaml)",
+        help="YAML config file (default: configs/split.yaml)",
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pfw split",
-        description="Memecah file Excel berdasarkan nilai kolom tertentu.",
+        description="Split a tabular file by the values of one column.",
     )
     add_arguments(parser)
     return parser
@@ -150,11 +151,11 @@ def run(args: argparse.Namespace) -> int:
     include_header = config.get("include_header", True) and not args.no_header
 
     if not input_file:
-        log.error("Error: File input harus diisi (via CLI atau config)")
+        log.error("Error: input file is required (via CLI or config)")
         return 1
 
     if not split_by:
-        log.error("Error: Kolom split harus diisi (via --kolom atau config)")
+        log.error("Error: split column is required (via --kolom or config)")
         return 1
 
     try:

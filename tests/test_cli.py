@@ -117,8 +117,8 @@ def test_diff_sample(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert report.exists()
-    assert "Baris baru     : 2" in result.stdout
-    assert "Cell berubah   : 6" in result.stdout
+    assert "Rows added    : 2" in result.stdout
+    assert "Cells changed : 6" in result.stdout
 
 
 def test_validate_sample(tmp_path):
@@ -130,4 +130,4 @@ def test_validate_sample(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert report.exists()
-    assert "Error       : 7 baris (17 masalah)" in result.stdout
+    assert "Errors      : 7 row(s) (17 issue(s))" in result.stdout

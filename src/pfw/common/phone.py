@@ -1,4 +1,4 @@
-"""Normalisasi dan format nomor telepon Indonesia tanpa kehilangan digit."""
+"""Normalize and format Indonesian phone numbers without dropping digits."""
 
 import re
 
@@ -7,10 +7,10 @@ DEFAULT_MAX_DIGITS = 15
 
 
 def phone_digits(value: object) -> str | None:
-    """Kembalikan digit telepon dengan awalan ``0`` tanpa cek panjang.
+    """Return phone digits with a leading ``0``, without length checks.
 
-    Awalan ``62`` diganti ``0`` dan awalan ``8`` (tanpa 0/62) ditambah ``0``.
-    Mengembalikan ``None`` jika tidak ada digit sama sekali.
+    A ``62`` country prefix becomes ``0``; a bare ``8...`` number gets a leading
+    ``0``. Returns ``None`` when there are no digits at all.
     """
     if value is None:
         return None
@@ -36,7 +36,7 @@ def normalize_phone(
     min_digits: int = DEFAULT_MIN_DIGITS,
     max_digits: int = DEFAULT_MAX_DIGITS,
 ) -> str | None:
-    """Kembalikan digit telepon yang valid (10-15 digit) atau ``None``."""
+    """Return valid phone digits (10-15 by default) or ``None``."""
     digits = phone_digits(value)
     if digits is None:
         return None
@@ -46,11 +46,11 @@ def normalize_phone(
 
 
 def format_phone(digits: str) -> str:
-    """Beri tanda hubung tanpa memotong digit apa pun.
+    """Insert hyphens without truncating any digit.
 
-    - 12 digit: ``0xxx-xxxx-xxxx``
-    - 11 digit: ``0xxx-xxx-xxxx``
-    - lainnya: grup 4 digit dari kiri, sisa digit tetap disertakan
+    - 12 digits: ``0xxx-xxxx-xxxx``
+    - 11 digits: ``0xxx-xxx-xxxx``
+    - otherwise: groups of 4 from the left, remainder kept
     """
     if len(digits) == 12:
         return f"{digits[:4]}-{digits[4:8]}-{digits[8:]}"

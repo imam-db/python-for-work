@@ -15,7 +15,7 @@ def _check_suffix(path: Path) -> str:
     if suffix not in SUPPORTED_SUFFIXES:
         supported = ", ".join(SUPPORTED_SUFFIXES)
         raise ValueError(
-            f"Format file '{suffix or path.name}' tidak didukung. Gunakan: {supported}"
+            f"Unsupported file format '{suffix or path.name}'. Use: {supported}"
         )
     return suffix
 
@@ -52,21 +52,31 @@ def write_table(
     df: pd.DataFrame,
     path: str | Path,
     text_columns: tuple[str, ...] = (),
+    header: bool = True,
 ) -> None:
     """Write a DataFrame to xlsx, csv, or parquet based on the file suffix.
 
     For xlsx, text columns are marked with the ``@`` number format so Excel
-    keeps values such as ``081234567890`` as text.
+    keeps values such as ``081234567890`` as text. Text formatting requires a
+    header row; when ``header`` is False the marking step is skipped.
+
+    Parquet always stores a schema, so ``header=False`` raises ValueError.
     """
     path = Path(path)
     suffix = _check_suffix(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    if suffix == ".parquet" and not header:
+        raise ValueError(
+            "Parquet always includes column names; header=False is not supported"
+        )
+
     if suffix == ".xlsx":
-        df.to_excel(path, index=False)
-        _mark_text_columns(path, text_columns)
+        df.to_excel(path, index=False, header=header)
+        if header:
+            _mark_text_columns(path, text_columns)
     elif suffix == ".csv":
-        df.to_csv(path, index=False)
+        df.to_csv(path, index=False, header=header)
     else:
         frame = df.copy()
         for column in text_columns:

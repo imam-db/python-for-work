@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pfw.merge import merge_excel_files
+from pfw.merge import merge_excel_files, merge_tables
 from pfw.sample import generate_merge
 
 ROW = {
@@ -36,7 +36,7 @@ def test_merge_two_files(tmp_path):
     write_branch(source, "cabang_bandung")
 
     output = tmp_path / "output" / "gabungan.xlsx"
-    total = merge_excel_files(str(source), str(output))
+    total = merge_tables(str(source), str(output))
 
     assert total == 2
     merged = pd.read_excel(output)
@@ -52,10 +52,10 @@ def test_schema_mismatch_warns_and_still_merges(tmp_path, caplog):
 
     output = tmp_path / "output" / "gabungan.xlsx"
     with caplog.at_level(logging.WARNING):
-        total = merge_excel_files(str(source), str(output))
+        total = merge_tables(str(source), str(output))
 
     assert total == 2
-    assert any("kolom" in record.message.lower() for record in caplog.records)
+    assert any("column" in record.message.lower() for record in caplog.records)
 
     merged = pd.read_excel(output)
     bandung = merged[merged["Cabang"] == "Bandung"]
@@ -70,10 +70,37 @@ def test_empty_file_is_skipped_with_warning(tmp_path, caplog):
 
     output = tmp_path / "output" / "gabungan.xlsx"
     with caplog.at_level(logging.WARNING):
-        total = merge_excel_files(str(source), str(output))
+        total = merge_tables(str(source), str(output))
 
     assert total == 1
-    assert any("kosong" in record.message.lower() for record in caplog.records)
+    assert any("empty" in record.message.lower() for record in caplog.records)
+
+
+def test_merge_mixed_formats(tmp_path):
+    source = tmp_path / "inbox"
+    source.mkdir()
+
+    pd.DataFrame([ROW]).to_excel(source / "cabang_jakarta.xlsx", index=False)
+    pd.DataFrame([dict(ROW, No=2)]).to_csv(source / "cabang_bandung.csv", index=False)
+    pd.DataFrame([dict(ROW, No=3)]).to_parquet(source / "cabang_surabaya.parquet", index=False)
+
+    output = tmp_path / "output" / "mixed.parquet"
+    total = merge_tables(str(source), str(output))
+
+    assert total == 3
+    merged = pd.read_parquet(output)
+    assert set(merged["Cabang"]) == {"Jakarta", "Bandung", "Surabaya"}
+    assert set(merged["No"].tolist()) == {1, 2, 3}
+    by_branch = dict(zip(merged["Cabang"], merged["No"], strict=True))
+    assert by_branch == {"Bandung": 2, "Jakarta": 1, "Surabaya": 3}
+
+
+def test_merge_excel_files_alias(tmp_path):
+    source = tmp_path / "inbox"
+    source.mkdir()
+    write_branch(source, "cabang_jakarta")
+    output = tmp_path / "out.xlsx"
+    assert merge_excel_files(str(source), str(output)) == 1
 
 
 def test_generate_sample_writes_to_default_folder(tmp_path, monkeypatch):

@@ -1,6 +1,6 @@
 # validate
 
-Validate rows against YAML rules before import, with an Excel findings report.
+Validate rows against YAML rules before import, with a spreadsheet findings report.
 
 ## Story
 
@@ -15,7 +15,7 @@ errors, **17** findings (measured on sample data).
 Those libraries are excellent for full data-quality platforms, but they pull large dependency
 trees and lean toward DataFrame schemas or warehouse workflows. This utility stays a single
 lightweight YAML file plus pandas/openpyxl: Indonesian phone digit rules, NIK regex, and an
-Excel report with highlighted cells — enough for ops hand-offs without standing up a DQ
+spreadsheet report with highlighted cells — enough for ops hand-offs without standing up a DQ
 stack. Reach for Pandera/GE when you need typed schemas, suite versioning, or warehouse
 orchestration.
 
@@ -33,5 +33,5 @@ pfw validate ./sample/data_pendaftaran.xlsx -c configs/validate.yaml -o ./output
 
 ## Output
 
-Console summary plus an optional multi-sheet Excel report (Summary, Detail Error, Data with
+Console summary plus an optional multi-sheet spreadsheet report (Summary, Detail Error, Data with
 error cells highlighted). Phone columns stay text so leading zeros survive.

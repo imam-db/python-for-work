@@ -8,10 +8,10 @@ import sys
 from pfw import __version__, clean, diff, merge, sample, split, validate
 
 UTILITIES = [
-    (merge, "merge", "Merge workbooks from a folder"),
+    (merge, "merge", "Merge tabular files from a folder"),
     (clean, "clean", "Clean names, dates, and phones"),
-    (split, "split", "Split a workbook by column"),
-    (diff, "diff", "Diff two workbook versions"),
+    (split, "split", "Split a tabular file by column"),
+    (diff, "diff", "Diff two file versions"),
     (validate, "validate", "Validate rows against YAML rules"),
 ]
 
@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     commands = "\n".join(f"  {name:<10} {summary}" for _, name, summary in UTILITIES)
     parser = argparse.ArgumentParser(
         prog="pfw",
-        description="Run the Python for Work Excel utilities from one command.",
+        description="Run the Python for Work utilities from one command.",
         epilog=(
             f"commands:\n{commands}\n"
             f"  {'sample':<10} Generate sample data for a utility"

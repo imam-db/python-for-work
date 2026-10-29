@@ -1,4 +1,4 @@
-"""Compare two workbooks and report what changed."""
+"""Compare two tabular files and report what changed."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ def sort_key(value: str) -> tuple[int, int, str]:
 
 
 def warn_duplicate_keys(df: pd.DataFrame, key_column: str, label: str) -> None:
-    """Catat peringatan jika kolom kunci punya nilai duplikat."""
+    """Warn when the key column contains duplicate values."""
     keys = df[key_column].astype(str)
     duplicates = keys[keys.duplicated()].unique().tolist()
     if not duplicates:
@@ -40,7 +40,7 @@ def warn_duplicate_keys(df: pd.DataFrame, key_column: str, label: str) -> None:
     preview = ", ".join(duplicates[:10])
     remaining = f" (+{len(duplicates) - 10} lainnya)" if len(duplicates) > 10 else ""
     log.warning(
-        "Peringatan: %s kolom kunci '%s' duplikat: %s%s; memakai baris pertama",
+        "Warning: %s duplicate key(s) in column '%s': %s%s; using the first row",
         label,
         key_column,
         preview,
@@ -53,28 +53,28 @@ def compare_dataframes(
 ) -> dict:
     """Bandingkan dua DataFrame dan return perbedaannya.
 
-    Jika ada key duplikat, baris pertama yang dipakai untuk matching.
+    If the key has duplicates, the first row is used for matching.
     """
     result: dict = {"added": [], "deleted": [], "changed": [], "summary": {}}
 
     if key_column and key_column in df_old.columns and key_column in df_new.columns:
-        warn_duplicate_keys(df_old, key_column, "file lama")
-        warn_duplicate_keys(df_new, key_column, "file baru")
+        warn_duplicate_keys(df_old, key_column, "old file")
+        warn_duplicate_keys(df_new, key_column, "new file")
 
         old_keys = set(df_old[key_column].astype(str))
         new_keys = set(df_new[key_column].astype(str))
 
-        # Baris baru (ada di new, tidak di old)
+        # Added rows (in new, not in old)
         for key in sorted(new_keys - old_keys, key=sort_key):
             row = df_new[df_new[key_column].astype(str) == key].iloc[0].to_dict()
             result["added"].append({"key": key, "data": row})
 
-        # Baris dihapus (ada di old, tidak di new)
+        # Deleted rows (in old, not in new)
         for key in sorted(old_keys - new_keys, key=sort_key):
             row = df_old[df_old[key_column].astype(str) == key].iloc[0].to_dict()
             result["deleted"].append({"key": key, "data": row})
 
-        # Baris yang sama, cek perubahan nilai
+        # Shared keys: check cell-level changes
         for key in sorted(old_keys & new_keys, key=sort_key):
             old_row = df_old[df_old[key_column].astype(str) == key].iloc[0]
             new_row = df_new[df_new[key_column].astype(str) == key].iloc[0]
@@ -133,28 +133,28 @@ def compare_dataframes(
 
 
 def print_report(result: dict, key_column: str | None = None) -> None:
-    """Tampilkan laporan perbandingan ke console."""
+    """Print the comparison report to the console."""
     summary = result["summary"]
 
     log.info("")
     log.info("=" * 50)
-    log.info("LAPORAN PERBANDINGAN")
+    log.info("COMPARISON REPORT")
     log.info("=" * 50)
 
     log.info("")
-    log.info("Ringkasan:")
-    log.info("  - Baris baru     : %s", summary["added_count"])
-    log.info("  - Baris dihapus  : %s", summary["deleted_count"])
-    log.info("  - Cell berubah   : %s", summary["changed_count"])
+    log.info("Summary:")
+    log.info("  - Rows added    : %s", summary["added_count"])
+    log.info("  - Rows deleted  : %s", summary["deleted_count"])
+    log.info("  - Cells changed : %s", summary["changed_count"])
 
     if not (summary["added_count"] or summary["deleted_count"] or summary["changed_count"]):
         log.info("")
-        log.info("Kedua file IDENTIK, tidak ada perbedaan.")
+        log.info("Both files are IDENTICAL; no differences.")
         return
 
     if result["changed"]:
         log.info("")
-        log.info("--- PERUBAHAN (%s) ---", len(result["changed"]))
+        log.info("--- CHANGES (%s) ---", len(result["changed"]))
         for item in result["changed"][:20]:
             if key_column:
                 log.info(
@@ -167,61 +167,61 @@ def print_report(result: dict, key_column: str | None = None) -> None:
                 )
             else:
                 log.info(
-                    "  Baris %s, %s: %s -> %s",
+                    "  Row %s, %s: %s -> %s",
                     item["row"],
                     item["column"],
                     item["old_value"],
                     item["new_value"],
                 )
         if len(result["changed"]) > 20:
-            log.info("  ... dan %s perubahan lainnya", len(result["changed"]) - 20)
+            log.info("  ... and %s more change(s)", len(result["changed"]) - 20)
 
     if result["added"]:
         log.info("")
-        log.info("--- BARIS BARU (%s) ---", len(result["added"]))
+        log.info("--- ADDED ROWS (%s) ---", len(result["added"]))
         for item in result["added"][:10]:
             if key_column:
                 log.info("  [%s=%s]", key_column, item["key"])
             else:
-                log.info("  Baris %s", item["row"])
+                log.info("  Row %s", item["row"])
         if len(result["added"]) > 10:
-            log.info("  ... dan %s baris lainnya", len(result["added"]) - 10)
+            log.info("  ... and %s more row(s)", len(result["added"]) - 10)
 
     if result["deleted"]:
         log.info("")
-        log.info("--- BARIS DIHAPUS (%s) ---", len(result["deleted"]))
+        log.info("--- DELETED ROWS (%s) ---", len(result["deleted"]))
         for item in result["deleted"][:10]:
             if key_column:
                 log.info("  [%s=%s]", key_column, item["key"])
             else:
-                log.info("  Baris %s", item["row"])
+                log.info("  Row %s", item["row"])
         if len(result["deleted"]) > 10:
-            log.info("  ... dan %s baris lainnya", len(result["deleted"]) - 10)
+            log.info("  ... and %s more row(s)", len(result["deleted"]) - 10)
 
 
 def export_to_excel(
     result: dict, output_path: str, key_column: str | None = None
 ) -> None:
-    """Export hasil perbandingan ke Excel dengan highlight."""
+    """Export the comparison result to a highlighted spreadsheet report."""
     workbook = Workbook()
 
     ws_summary = workbook.active
     ws_summary.title = "Summary"
-    ws_summary["A1"] = "Laporan Perbandingan Excel"
+    ws_summary["A1"] = "Comparison Report"
     ws_summary["A1"].font = Font(bold=True, size=14)
-    ws_summary["A3"] = "Baris Baru:"
+    ws_summary["A3"] = "Rows added:"
     ws_summary["B3"] = result["summary"]["added_count"]
-    ws_summary["A4"] = "Baris Dihapus:"
+    ws_summary["A4"] = "Rows deleted:"
     ws_summary["B4"] = result["summary"]["deleted_count"]
-    ws_summary["A5"] = "Cell Berubah:"
+    ws_summary["A5"] = "Cells changed:"
     ws_summary["B5"] = result["summary"]["changed_count"]
 
     if result["changed"]:
-        ws_changed = workbook.create_sheet("Perubahan")
+        ws_changed = workbook.create_sheet("Changes")
         if key_column:
-            ws_changed.append([key_column, "Kolom", "Nilai Lama", "Nilai Baru"])
+            ws_changed.append([key_column, "Column", "Old value", "New value"])
         else:
-            ws_changed.append(["Baris", "Kolom", "Nilai Lama", "Nilai Baru"])
+            ws_changed.append(["Row", "Column", "Old value", "New value"])
 
         for item in result["changed"]:
             if key_column:
@@ -238,7 +238,7 @@ def export_to_excel(
             cell.font = Font(bold=True)
 
     if result["added"]:
-        ws_added = workbook.create_sheet("Baris Baru")
+        ws_added = workbook.create_sheet("New Rows")
         headers = list(result["added"][0]["data"].keys())
         ws_added.append(headers)
         for cell in ws_added[1]:
@@ -249,7 +249,7 @@ def export_to_excel(
             ws_added.append(list(item["data"].values()))
 
     if result["deleted"]:
-        ws_deleted = workbook.create_sheet("Baris Dihapus")
+        ws_deleted = workbook.create_sheet("Deleted Rows")
         headers = list(result["deleted"][0]["data"].keys())
         ws_deleted.append(headers)
         for cell in ws_deleted[1]:
@@ -263,7 +263,7 @@ def export_to_excel(
     output_file.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(output_file)
     log.info("")
-    log.info("Laporan Excel disimpan ke: %s", output_path)
+    log.info("Report saved to: %s", output_path)
 
 
 def compare_excel(
@@ -272,14 +272,14 @@ def compare_excel(
     key_column: str | None = None,
     output_file: str | None = None,
 ) -> dict:
-    """Main function untuk membandingkan 2 file Excel."""
+    """Compare two tabular files and optionally export a report."""
     if not Path(file_old).exists():
-        raise FileNotFoundError(f"File '{file_old}' tidak ditemukan")
+        raise FileNotFoundError(f"File '{file_old}' not found")
     if not Path(file_new).exists():
-        raise FileNotFoundError(f"File '{file_new}' tidak ditemukan")
+        raise FileNotFoundError(f"File '{file_new}' not found")
 
-    log.info("File lama : %s", file_old)
-    log.info("File baru : %s", file_new)
+    log.info("Old file : %s", file_old)
+    log.info("New file : %s", file_new)
     if key_column:
         log.info("Key column: %s", key_column)
 
@@ -287,17 +287,17 @@ def compare_excel(
     df_new = read_table(file_new)
 
     log.info("")
-    log.info("File lama: %s baris, %s kolom", len(df_old), len(df_old.columns))
-    log.info("File baru: %s baris, %s kolom", len(df_new), len(df_new.columns))
+    log.info("Old file: %s rows, %s columns", len(df_old), len(df_old.columns))
+    log.info("New file: %s rows, %s columns", len(df_new), len(df_new.columns))
 
     if key_column:
         if key_column not in df_old.columns:
             raise ValueError(
-                f"Kolom '{key_column}' tidak ditemukan di file lama. "
-                f"Kolom tersedia: {', '.join(map(str, df_old.columns))}"
+                f"Column '{key_column}' not found in the old file. "
+                f"Available columns: {', '.join(map(str, df_old.columns))}"
             )
         if key_column not in df_new.columns:
-            raise ValueError(f"Kolom '{key_column}' tidak ditemukan di file baru")
+            raise ValueError(f"Column '{key_column}' not found in the new file")
 
     result = compare_dataframes(df_old, df_new, key_column)
     print_report(result, key_column)
@@ -309,16 +309,16 @@ def compare_excel(
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("file_old", help="File Excel lama")
-    parser.add_argument("file_new", help="File Excel baru")
-    parser.add_argument("--key", "-k", help="Kolom kunci untuk matching baris")
-    parser.add_argument("--output", "-o", help="Export hasil ke file Excel")
+    parser.add_argument("file_old", help="Older tabular file (.xlsx, .csv, .parquet)")
+    parser.add_argument("file_new", help="Newer tabular file (.xlsx, .csv, .parquet)")
+    parser.add_argument("--key", "-k", help="Key column used to match rows")
+    parser.add_argument("--output", "-o", help="Export the report to an .xlsx file")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pfw diff",
-        description="Membandingkan 2 file Excel dan menampilkan perbedaannya.",
+        description="Compare two tabular files and show the differences.",
     )
     add_arguments(parser)
     return parser
