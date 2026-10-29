@@ -131,3 +131,28 @@ def test_validate_sample(tmp_path):
     assert result.returncode == 0, result.stderr
     assert report.exists()
     assert "Errors      : 7 row(s) (17 issue(s))" in result.stdout
+
+
+def test_load_help():
+    result = run_pfw("load", "--help")
+    assert result.returncode == 0
+    assert "DuckDB" in result.stdout or "duckdb" in result.stdout.lower()
+
+
+def test_load_sample_into_duckdb(tmp_path):
+    source = tmp_path / "sales_daily.csv"
+    assert run_pfw("sample", "load", "-o", source).returncode == 0
+
+    db = tmp_path / "pfw.duckdb"
+    result = run_pfw(
+        "load",
+        source,
+        "--table",
+        "sales_daily",
+        "--db",
+        db,
+        "--mode",
+        "replace",
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Wrote 20" in result.stdout
