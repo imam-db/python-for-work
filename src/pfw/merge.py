@@ -1,4 +1,4 @@
-"""Merge every workbook in a folder into a single Excel file."""
+"""Merge every tabular file in a folder into a single output file."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pfw.common.io import read_table, write_table
+from pfw.common.io import SUPPORTED_SUFFIXES, read_table, write_table
 from pfw.common.logging_setup import get_logger, setup_logging
 
 log = get_logger("merge")
@@ -15,22 +15,33 @@ log = get_logger("merge")
 DEFAULT_OUTPUT = Path("output") / "hasil_gabungan.xlsx"
 
 
-def merge_excel_files(input_folder: str, output_file: str) -> int:
-    """Gabungkan semua file Excel dalam folder menjadi satu file.
+def _discover_files(folder: Path) -> list[Path]:
+    files: list[Path] = []
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix.lower() in SUPPORTED_SUFFIXES:
+            files.append(path)
+    return sorted(files, key=lambda item: item.name.lower())
 
-    File kosong dilewati. File dengan kolom berbeda tetap digabung (outer
-    concat) tetapi memunculkan peringatan agar NaN-nya terlihat jelas.
+
+def merge_tables(input_folder: str, output_file: str) -> int:
+    """Merge every xlsx, csv, or parquet file in a folder into one file.
+
+    Empty files are skipped. Files with different columns still merge (outer
+    concat) but emit a warning so the resulting NaNs are obvious.
     """
     folder = Path(input_folder)
 
     if not folder.exists():
-        raise FileNotFoundError(f"Folder '{input_folder}' tidak ditemukan")
+        raise FileNotFoundError(f"Folder '{input_folder}' not found")
 
-    excel_files = sorted(folder.glob("*.xlsx"))
-    if not excel_files:
-        raise FileNotFoundError(f"Tidak ada file Excel di folder '{input_folder}'")
+    table_files = _discover_files(folder)
+    if not table_files:
+        supported = ", ".join(SUPPORTED_SUFFIXES)
+        raise FileNotFoundError(
+            f"No tabular files ({supported}) found in folder '{input_folder}'"
+        )
 
-    log.info("Ditemukan %s file Excel di folder %s", len(excel_files), input_folder)
+    log.info("Found %s tabular file(s) in folder %s", len(table_files), input_folder)
 
     all_data: list[pd.DataFrame] = []
     total_rows = 0
@@ -38,11 +49,11 @@ def merge_excel_files(input_folder: str, output_file: str) -> int:
     skipped_empty = 0
     mismatched = 0
 
-    for file in excel_files:
+    for file in table_files:
         df = read_table(file)
 
         if df.empty:
-            log.warning("- Dilewati: %s (file kosong, 0 baris)", file.name)
+            log.warning("- Skipped: %s (empty file, 0 rows)", file.name)
             skipped_empty += 1
             continue
 
@@ -53,55 +64,65 @@ def merge_excel_files(input_folder: str, output_file: str) -> int:
             missing = [col for col in reference_columns if col not in columns]
             extra = [col for col in columns if col not in reference_columns]
             log.warning(
-                "- PERINGATAN: kolom %s berbeda (hilang: %s, tambahan: %s); "
-                "tetap digabung, kolom yang tidak ada akan berisi NaN",
+                "- WARNING: columns in %s differ (missing: %s, extra: %s); "
+                "still merging, absent columns will be NaN",
                 file.name,
                 missing or "-",
                 extra or "-",
             )
             mismatched += 1
 
-        nama_cabang = file.stem.replace("cabang_", "").title()
-        df["Cabang"] = nama_cabang
+        branch_name = file.stem.replace("cabang_", "").title()
+        df["Cabang"] = branch_name
         row_count = len(df)
         total_rows += row_count
-        log.info("- Memproses: %s (%s baris)", file.name, row_count)
+        log.info("- Processing: %s (%s rows)", file.name, row_count)
         all_data.append(df)
 
     if not all_data:
-        raise ValueError("Semua file Excel kosong, tidak ada data untuk digabung")
+        raise ValueError("All tabular files are empty; nothing to merge")
 
     merged_df = pd.concat(all_data, ignore_index=True, sort=False)
     write_table(merged_df, output_file)
 
     log.info("")
     log.info(
-        "Berhasil! Total %s baris dari %s file digabungkan ke %s",
+        "Done! Merged %s rows from %s file(s) into %s",
         total_rows,
         len(all_data),
         output_file,
     )
     if skipped_empty:
-        log.info("%s file kosong dilewati", skipped_empty)
+        log.info("%s empty file(s) skipped", skipped_empty)
     if mismatched:
-        log.warning("%s file memiliki kolom berbeda (lihat peringatan di atas)", mismatched)
+        log.warning("%s file(s) had mismatched columns (see warnings above)", mismatched)
 
     return total_rows
 
 
+def merge_excel_files(input_folder: str, output_file: str) -> int:
+    """Backward-compatible alias for :func:`merge_tables`."""
+    return merge_tables(input_folder, output_file)
+
+
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("input_folder", help="Folder berisi file Excel (.xlsx)")
+    parser.add_argument(
+        "input_folder",
+        help="Folder of tabular files (.xlsx, .csv, .parquet)",
+    )
     parser.add_argument(
         "output_file",
         nargs="?",
-        help="File hasil gabungan (default: output/hasil_gabungan.xlsx)",
+        help="Merged output path (default: output/hasil_gabungan.xlsx)",
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pfw merge",
-        description="Menggabungkan semua file .xlsx dalam satu folder menjadi satu file.",
+        description=(
+            "Merge every .xlsx, .csv, or .parquet file in a folder into one file."
+        ),
     )
     add_arguments(parser)
     return parser
@@ -110,7 +131,7 @@ def build_parser() -> argparse.ArgumentParser:
 def run(args: argparse.Namespace) -> int:
     setup_logging()
     try:
-        merge_excel_files(args.input_folder, args.output_file or str(DEFAULT_OUTPUT))
+        merge_tables(args.input_folder, args.output_file or str(DEFAULT_OUTPUT))
     except (FileNotFoundError, ValueError) as exc:
         log.error("Error: %s", exc)
         return 1

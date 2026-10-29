@@ -118,7 +118,7 @@ def generate_merge(output_dir: str | Path | None = None) -> list[Path]:
         path = sample_dir / f"{cabang}.xlsx"
         write_table(frame, path)
         written.append(path)
-        log.info("%s.xlsx: %s transaksi", cabang, num_rows)
+        log.info("%s.xlsx: %s transaction(s)", cabang, num_rows)
 
     log.info("Done!")
     return written
@@ -196,8 +196,8 @@ def generate_clean(output_path: str | Path | None = None) -> Path:
     path = Path(output_path) if output_path else DEFAULT_SAMPLE_DIR / "data_kotor.xlsx"
     frame = build_clean_data()
     write_table(frame, path, text_columns=("No HP",))
-    log.info("Sample data kotor berhasil dibuat: %s", path)
-    log.info("Total baris: %s", len(frame))
+    log.info("Dirty sample data created: %s", path)
+    log.info("Total rows: %s", len(frame))
     return path
 
 
@@ -238,12 +238,12 @@ def generate_split(output_path: str | Path | None = None) -> Path:
     )
     frame = build_split_data()
     write_table(frame, path)
-    log.info("Sample data berhasil dibuat: %s", path)
-    log.info("Total baris: %s", len(frame))
+    log.info("Sample data created: %s", path)
+    log.info("Total rows: %s", len(frame))
     log.info("")
-    log.info("Distribusi per cabang:")
+    log.info("Distribution by branch:")
     for cabang, count in frame["Cabang"].value_counts().items():
-        log.info("  - %s: %s transaksi", cabang, count)
+        log.info("  - %s: %s transaction(s)", cabang, count)
     return path
 
 
@@ -367,9 +367,9 @@ def generate_diff(output_dir: str | Path | None = None) -> tuple[Path, Path]:
     write_table(df_lama, path_lama)
     write_table(df_revisi, path_revisi)
 
-    log.info("Sample data berhasil dibuat:")
-    log.info("  - %s (%s baris)", path_lama, len(df_lama))
-    log.info("  - %s (%s baris)", path_revisi, len(df_revisi))
+    log.info("Sample data created:")
+    log.info("  - %s (%s rows)", path_lama, len(df_lama))
+    log.info("  - %s (%s rows)", path_revisi, len(df_revisi))
     return path_lama, path_revisi
 
 
@@ -474,8 +474,8 @@ def generate_validate(output_path: str | Path | None = None) -> Path:
     )
     frame = build_validate_data()
     write_table(frame, path, text_columns=("No HP", "NIK"))
-    log.info("Sample data berhasil dibuat: %s", path)
-    log.info("Total baris: %s", len(frame))
+    log.info("Sample data created: %s", path)
+    log.info("Total rows: %s", len(frame))
     return path
 
 

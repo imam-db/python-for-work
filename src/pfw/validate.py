@@ -25,14 +25,14 @@ FILL_HEADER = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="s
 
 
 class Validator:
-    """Class untuk validasi data."""
+    """Row validators driven by YAML rules."""
 
     def __init__(self, df: pd.DataFrame):
         self.df = df
         self.errors: list[dict] = []
 
     def validate_required(self, column: str, rule: dict) -> None:
-        """Validasi field tidak boleh kosong."""
+        """Require a non-empty field."""
         for idx, value in self.df[column].items():
             if pd.isna(value) or str(value).strip() == "":
                 self.errors.append(
@@ -41,12 +41,12 @@ class Validator:
                         "column": column,
                         "value": value,
                         "rule": "required",
-                        "message": f"{column} tidak boleh kosong",
+                        "message": f"{column} must not be empty",
                     }
                 )
 
     def validate_email(self, column: str, rule: dict) -> None:
-        """Validasi format email."""
+        """Validate email format."""
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         for idx, value in self.df[column].items():
             if pd.notna(value) and str(value).strip() != "":
@@ -57,12 +57,12 @@ class Validator:
                             "column": column,
                             "value": value,
                             "rule": "email",
-                            "message": f"Format email tidak valid: {value}",
+                            "message": f"Invalid email format: {value}",
                         }
                     )
 
     def validate_phone(self, column: str, rule: dict) -> None:
-        """Validasi nomor telepon: minimal dan maksimal digit."""
+        """Validate phone numbers against min/max digit counts."""
         min_digits = rule.get("min_digits", 10)
         max_digits = rule.get("max_digits", 15)
 
@@ -87,7 +87,7 @@ class Validator:
                 )
 
     def validate_date_range(self, column: str, rule: dict) -> None:
-        """Validasi tanggal dalam range."""
+        """Validate dates against an optional range."""
         min_date = rule.get("min")
         max_date = rule.get("max")
 
@@ -112,7 +112,7 @@ class Validator:
                                 "value": value,
                                 "rule": "date_range",
                                 "message": (
-                                    f'Tanggal sebelum {min_date.strftime("%Y-%m-%d")}: {value}'
+                                    f'Date before {min_date.strftime("%Y-%m-%d")}: {value}'
                                 ),
                             }
                         )
@@ -124,7 +124,7 @@ class Validator:
                                 "value": value,
                                 "rule": "date_range",
                                 "message": (
-                                    f'Tanggal setelah {max_date.strftime("%Y-%m-%d")}: {value}'
+                                    f'Date after {max_date.strftime("%Y-%m-%d")}: {value}'
                                 ),
                             }
                         )
@@ -135,12 +135,12 @@ class Validator:
                             "column": column,
                             "value": value,
                             "rule": "date_range",
-                            "message": f"Format tanggal tidak valid: {value}",
+                            "message": f"Invalid date format: {value}",
                         }
                     )
 
     def validate_number_range(self, column: str, rule: dict) -> None:
-        """Validasi angka dalam range."""
+        """Validate numbers against an optional range."""
         min_val = rule.get("min")
         max_val = rule.get("max")
 
@@ -180,9 +180,9 @@ class Validator:
                     )
 
     def validate_regex(self, column: str, rule: dict) -> None:
-        """Validasi dengan regex pattern."""
+        """Validate with a regex pattern."""
         pattern = rule.get("pattern")
-        message = rule.get("message", f"Tidak sesuai format: {pattern}")
+        message = rule.get("message", f"Does not match format: {pattern}")
 
         if not pattern:
             return
@@ -201,7 +201,7 @@ class Validator:
                     )
 
     def validate_in_list(self, column: str, rule: dict) -> None:
-        """Validasi nilai harus dalam list."""
+        """Require the value to be one of an allowed list."""
         valid_values = rule.get("values", [])
 
         for idx, value in self.df[column].items():
@@ -214,14 +214,14 @@ class Validator:
                             "value": value,
                             "rule": "in_list",
                             "message": (
-                                f'Nilai "{value}" tidak valid. '
-                                f"Harus salah satu dari: {valid_values}"
+                                f'Value "{value}" is not valid. '
+                                f"Must be one of: {valid_values}"
                             ),
                         }
                     )
 
     def validate_unique(self, column: str, rule: dict) -> None:
-        """Validasi nilai harus unik (tidak duplikat)."""
+        """Require unique values (no duplicates)."""
         seen = {}
         for idx, value in self.df[column].items():
             if pd.notna(value) and str(value).strip() != "":
@@ -233,17 +233,17 @@ class Validator:
                             "column": column,
                             "value": value,
                             "rule": "unique",
-                            "message": f"Duplikat dengan baris {seen[str_val]}: {value}",
+                            "message": f"Duplicate of row {seen[str_val]}: {value}",
                         }
                     )
                 else:
                     seen[str_val] = idx + 2
 
     def validate(self, rules: dict) -> list:
-        """Jalankan semua validasi berdasarkan rules."""
+        """Run every validation rule and collect errors."""
         for column, column_rules in rules.items():
             if column not in self.df.columns:
-                log.warning("  Peringatan: Kolom '%s' tidak ditemukan, skip validasi", column)
+                log.warning("  Warning: column '%s' not found, skipping validation", column)
                 continue
 
             for rule in column_rules:
@@ -270,39 +270,39 @@ class Validator:
 
 
 def print_report(total_rows: int, errors: list) -> None:
-    """Tampilkan laporan validasi ke console."""
+    """Print the validation report to the console."""
     error_rows = set(e["row"] for e in errors)
     valid_count = total_rows - len(error_rows)
 
     log.info("")
     log.info("=" * 50)
-    log.info("LAPORAN VALIDASI")
+    log.info("VALIDATION REPORT")
     log.info("=" * 50)
 
     log.info("")
-    log.info("Ringkasan:")
-    log.info("  Total baris : %s", total_rows)
+    log.info("Summary:")
+    log.info("  Total rows  : %s", total_rows)
     log.info("  Valid       : %s", valid_count)
-    log.info("  Error       : %s baris (%s masalah)", len(error_rows), len(errors))
+    log.info("  Errors      : %s row(s) (%s issue(s))", len(error_rows), len(errors))
 
     if not errors:
         log.info("")
-        log.info("Semua data VALID!")
+        log.info("All data is VALID!")
         return
 
     log.info("")
-    log.info("--- DETAIL ERROR (%s) ---", len(errors))
+    log.info("--- ERROR DETAIL (%s) ---", len(errors))
     for error in errors[:30]:
-        log.info("  Baris %s: %s", error["row"], error["message"])
+        log.info("  Row %s: %s", error["row"], error["message"])
 
     if len(errors) > 30:
-        log.info("  ... dan %s error lainnya", len(errors) - 30)
+        log.info("  ... and %s more error(s)", len(errors) - 30)
 
 
 def export_to_excel(
     df: pd.DataFrame, errors: list, output_path: str, text_columns: tuple[str, ...] = ()
 ) -> None:
-    """Export hasil validasi ke Excel (semua nilai ditulis sebagai teks)."""
+    """Export the validation result to Excel (all values written as text)."""
     workbook = Workbook()
 
     ws_summary = workbook.active
@@ -311,9 +311,9 @@ def export_to_excel(
     error_rows = set(e["row"] for e in errors)
     valid_count = len(df) - len(error_rows)
 
-    ws_summary["A1"] = "Laporan Validasi Data"
+    ws_summary["A1"] = "Data Validation Report"
     ws_summary["A1"].font = Font(bold=True, size=14)
-    ws_summary["A3"] = "Total Baris:"
+    ws_summary["A3"] = "Total rows:"
     ws_summary["B3"] = len(df)
     ws_summary["A4"] = "Valid:"
     ws_summary["B4"] = valid_count
@@ -324,7 +324,7 @@ def export_to_excel(
 
     if errors:
         ws_errors = workbook.create_sheet("Detail Error")
-        ws_errors.append(["Baris", "Kolom", "Nilai", "Rule", "Pesan"])
+        ws_errors.append(["Row", "Column", "Value", "Rule", "Message"])
 
         for cell in ws_errors[1]:
             cell.fill = FILL_HEADER
@@ -369,11 +369,11 @@ def export_to_excel(
     output_file.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(output_file)
     log.info("")
-    log.info("Laporan Excel disimpan ke: %s", output_path)
+    log.info("Excel report saved to: %s", output_path)
 
 
 def phone_columns(rules: dict) -> tuple[str, ...]:
-    """Ambil kolom yang punya rule bertipe ``phone``."""
+    """Return columns that have a ``phone`` rule."""
     columns = []
     for column, column_rules in rules.items():
         for rule in column_rules:
@@ -384,18 +384,18 @@ def phone_columns(rules: dict) -> tuple[str, ...]:
 
 
 def validate_data(input_file: str, rules: dict, output_file: str | None = None) -> list:
-    """Main function untuk validasi data."""
+    """Validate a tabular file against YAML rules."""
     if not Path(input_file).exists():
-        raise FileNotFoundError(f"File '{input_file}' tidak ditemukan")
+        raise FileNotFoundError(f"File '{input_file}' not found")
 
-    log.info("Membaca file: %s", input_file)
+    log.info("Reading file: %s", input_file)
     text_columns = phone_columns(rules)
     df = read_table(input_file, text_columns=text_columns)
-    log.info("Total baris: %s", len(df))
-    log.info("Kolom: %s", ", ".join(map(str, df.columns)))
+    log.info("Total rows: %s", len(df))
+    log.info("Columns: %s", ", ".join(map(str, df.columns)))
 
     log.info("")
-    log.info("Memvalidasi data...")
+    log.info("Validating data...")
     validator = Validator(df)
     errors = validator.validate(rules)
 
@@ -408,19 +408,19 @@ def validate_data(input_file: str, rules: dict, output_file: str | None = None) 
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("input", nargs="?", help="File Excel input")
-    parser.add_argument("--output", "-o", help="Export hasil ke file Excel")
+    parser.add_argument("input", nargs="?", help="Input tabular file")
+    parser.add_argument("--output", "-o", help="Export the report to an Excel file")
     parser.add_argument(
         "--config",
         "-c",
-        help="File konfigurasi YAML (default: configs/validate.yaml)",
+        help="YAML config file (default: configs/validate.yaml)",
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pfw validate",
-        description="Validasi data Excel berdasarkan rules di config.",
+        description="Validate tabular data against rules in a YAML config.",
     )
     add_arguments(parser)
     return parser
@@ -447,11 +447,11 @@ def run(args: argparse.Namespace) -> int:
         output_file = None
 
     if not input_file:
-        log.error("Error: File input harus diisi (via CLI atau config)")
+        log.error("Error: input file is required (via CLI or config)")
         return 1
 
     if not rules:
-        log.error("Error: Rules validasi harus didefinisikan di %s", config_path)
+        log.error("Error: validation rules must be defined in %s", config_path)
         return 1
 
     try:

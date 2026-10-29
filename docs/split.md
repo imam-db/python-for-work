@@ -1,6 +1,6 @@
 # split
 
-Split one workbook into separate files based on the values of a column.
+Split one tabular file into separate files based on the values of a column.
 
 ## Story
 
@@ -10,8 +10,10 @@ sample of **100** rows becomes **5** branch workbooks (measured on sample data).
 
 ## Input
 
-A single tabular file and the column to split on (`--kolom`). Optional YAML defaults live in
-`configs/split.yaml`. Rows with blank split values go to `_kosong.xlsx`.
+A single tabular file (xlsx/csv/parquet) and the column to split on (`--kolom`). Optional
+YAML defaults live in `configs/split.yaml`. Rows with blank split values go to `_kosong.xlsx`.
+Pass `--no-header` to omit the header row in each output file (still written through
+`pfw.common.io`).
 
 ## Command
 
