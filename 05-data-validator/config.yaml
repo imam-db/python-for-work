@@ -18,6 +18,7 @@ rules:
     - type: required
     - type: phone
       min_digits: 10
+      max_digits: 15
 
   Tanggal Lahir:
     - type: date_range
