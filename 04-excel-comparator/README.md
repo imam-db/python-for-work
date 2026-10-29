@@ -1,67 +1,72 @@
 # 04 · Excel Comparator
 
-> Bab 4 kisah [Bu Sari](../README.md): Kamis, finance mengirim file revisi dan Bu Sari harus
-> tahu persis sel mana yang berubah.
+Compare two Excel files and report exactly what changed.
 
-Membandingkan 2 file Excel dan menampilkan perbedaannya secara detail.
+## Story
 
-## Cerita
+Citra works in finance at **PT Arta Graha**, a building-materials supplier. A colleague sends
+back the month-end workbook with the note "a few corrections — please check." There is no
+change log, the sheet is hundreds of rows long, and approving it means knowing which cells
+actually moved. Scrolling two files side by side is how mistakes slip through.
 
-Email dari finance singkat: "Tolong cek file revisi ini, ada beberapa koreksi." Filenya
-ratusan baris dan tidak dijelaskan baris mana yang berubah. Membandingkan dua file secara
-manual berarti scroll berdampingan dan mencatat perbedaan satu per satu.
+The sample has ten rows in each version, with changes spread across totals and statuses:
 
-Script ini menghasilkan laporan:
+| No | Change in the revised file |
+|----|----------------------------|
+| 1 | Total 5000000 → 5500000 |
+| 2 | Status Pending → Lunas |
+| 4 | Status Cicilan → Lunas |
+| 5 | Total 3100000 → 3600000 |
+| 6 | Status Pending → Lunas |
+| 8 | Status Pending → Lunas |
+| 9, 10 | Rows deleted |
+| 11, 12 | Rows added |
 
-- sel mana yang berubah (nilai lama → nilai baru)
-- baris mana yang baru ditambahkan
-- baris mana yang dihapus
-
-## Instalasi
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cara Menggunakan
+## Usage
 
 ```bash
-# pakai config.yaml di folder utility
+# use config.yaml in the utility folder
 python excel_comparator.py
 
-# dua file lewat CLI
+# pass the two files on the command line
 python excel_comparator.py file_lama.xlsx file_baru.xlsx
 
-# matching berdasarkan kolom kunci (disarankan)
+# match rows by a key column (recommended)
 python excel_comparator.py file_lama.xlsx file_baru.xlsx --key "No"
 
-# sekaligus export laporan Excel
+# also export the report to Excel
 python excel_comparator.py file_lama.xlsx file_baru.xlsx --key "No" -o laporan.xlsx
 ```
 
-Path dari CLI mengikuti current working directory. Path `file_old`, `file_new`, dan `output`
-di dalam config di-resolve relatif terhadap folder utility.
+Command-line paths resolve against the current working directory. `file_old`, `file_new`, and
+`output` inside the config resolve against the utility folder.
 
-## Opsi CLI
+## Options
 
-| Opsi | Shortcut | Deskripsi |
-|------|----------|-----------|
-| `file_old` | – | File Excel lama (positional) |
-| `file_new` | – | File Excel baru (positional) |
-| `--key` | `-k` | Kolom kunci untuk matching baris |
-| `--output` | `-o` | Export hasil ke file Excel |
-| `--config` | `-c` | File config YAML (default `config.yaml`) |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `file_old` | – | Original Excel file (positional) |
+| `file_new` | – | Revised Excel file (positional) |
+| `--key` | `-k` | Key column used to match rows |
+| `--output` | `-o` | Export the report to an Excel file |
+| `--config` | `-c` | YAML config file (default `config.yaml`) |
 
-## Demo (hasil run nyata)
+## Demo output
 
 ```bash
 python generate_sample.py
 python excel_comparator.py
 ```
 
-```
-File lama : /path/ke/repo/04-excel-comparator/sample/data_lama.xlsx
-File baru : /path/ke/repo/04-excel-comparator/sample/data_revisi.xlsx
+```text
+File lama : .../04-excel-comparator/sample/data_lama.xlsx
+File baru : .../04-excel-comparator/sample/data_revisi.xlsx
 Key column: No
 
 File lama: 10 baris, 5 kolom
@@ -92,46 +97,48 @@ Ringkasan:
   [No=9]
   [No=10]
 
-Laporan Excel disimpan ke: /path/ke/repo/04-excel-comparator/output/laporan_perbandingan.xlsx
+Laporan Excel disimpan ke: .../04-excel-comparator/output/laporan_perbandingan.xlsx
 ```
 
-## Output Excel
+The verified result is **2 added rows, 2 deleted rows, and 6 changed cells**.
 
-Sheet yang dihasilkan (folder output dibuat otomatis jika belum ada):
+## Comparison modes
 
-1. **Summary** — jumlah baris baru, dihapus, dan sel berubah
-2. **Perubahan** — detail sel yang berubah (highlight kuning)
-3. **Baris Baru** — data baris baru (highlight hijau)
-4. **Baris Dihapus** — data baris yang dihapus (highlight merah)
-
-## Mode Perbandingan
-
-**Dengan key column** (disarankan) — baris dicocokkan berdasarkan nilai kolom kunci, jadi
-perubahan urutan baris tidak dianggap perbedaan:
+**With a key column (recommended)** — rows are matched by the key value, so reordered rows
+are not reported as differences:
 
 ```bash
 python excel_comparator.py old.xlsx new.xlsx --key "No"
 ```
 
-**Tanpa key column** — baris dibandingkan berdasarkan posisi (baris 1 vs baris 1).
+**Without a key column** — rows are compared by position (row 1 against row 1).
 
-## Kunci Duplikat
+## Excel report
 
-Kolom kunci sebaiknya unik. Jika ada nilai duplikat, script tetap berjalan memakai baris
-**pertama** yang cocok, dan menampilkan peringatan berisi daftar kuncinya:
+The exported workbook contains (the output folder is created automatically if needed):
 
-```
+1. **Summary** — counts of added, deleted, and changed items
+2. **Perubahan** — changed cells (yellow header)
+3. **Baris Baru** — added rows (green header)
+4. **Baris Dihapus** — deleted rows (red header)
+
+## Duplicate keys
+
+The key column should be unique. If duplicates exist, the script still runs using the
+**first** matching row and prints a warning listing the duplicate keys:
+
+```text
 Peringatan: file lama kolom kunci 'No' duplikat: 1, 2; memakai baris pertama
 ```
 
-## Catatan
+## Notes
 
-- Kedua file sebaiknya memiliki struktur kolom yang sama.
-- Perbandingan bersifat case-sensitive.
-- Daftar baris baru/dihapus diurutkan secara numerik bila kuncinya berupa angka.
+- Both files should have the same column structure.
+- Comparison is case-sensitive.
+- Added and deleted rows are sorted numerically when the key is numeric.
 
-## Roadmap Singkat
+## Ideas
 
-- [ ] Abaikan kolom tertentu
-- [ ] Toleransi selisih untuk kolom angka
-- [ ] Export HTML/PDF
+- Ignore selected columns.
+- Allow a numeric tolerance for amount comparisons.
+- Export the report as HTML or PDF.
