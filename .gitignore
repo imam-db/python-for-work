@@ -9,16 +9,15 @@ env/
 .venv/
 .env/
 
-# Output files
-*/output/*.xlsx
-*/output/*.xls
-*/output/*.csv
+# Build artifacts
+build/
+dist/
+*.egg-info/
 
-# Generated sample data
-02-data-cleaner/sample/*.xlsx
-03-excel-splitter/sample/*.xlsx
-04-excel-comparator/sample/*.xlsx
-05-data-validator/sample/*.xlsx
+# Generated output and sample data
+output/
+sample/
+*.log
 
 # IDE
 .vscode/
@@ -30,12 +29,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
 # Tooling
 .pytest_cache/
 .ruff_cache/
-*.egg-info/
-build/
-dist/
