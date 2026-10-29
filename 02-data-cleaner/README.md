@@ -1,53 +1,44 @@
 # 02 · Data Cleaner
 
-> Bab 2 kisah [Bu Sari](../README.md): Selasa, data pelanggan dari form online harus
-> dirapikan sebelum dipakai tim marketing.
+Clean and standardize names, dates, and phone numbers in an Excel file using YAML rules.
 
-Membersihkan dan menstandardisasi data Excel berdasarkan konfigurasi YAML.
+## Story
 
-## Cerita
+Nina is a marketing analyst on the promo team at **Toko Sumber Makmur**, a mid-size retailer.
+Weekend booth staff collect customer signups on shared laptops, and by Monday the list looks
+like it survived a typing contest: names in random caps, birth dates in three formats, and
+phone numbers that lost their leading zero somewhere in Excel. Nina needs a dependable list
+before the SMS campaign goes out.
 
-Data pelanggan PT Maju Jaya datang dari banyak sumber: form online, input manual SPG, dan
-export sistem lama. Hasilnya campur aduk:
+A typical sheet before cleaning:
 
-```
-| Nama Lengkap     | Tanggal Lahir | No HP              |
-|------------------|---------------|--------------------|
-|   BUDI SANTOSO   | 15/01/1990    | 081234567890       |
-| siti nurhaliza   | 1985-03-20    | +62 812 3456 7891  |
-| AHMAD   DAHLAN   | 05 Mei 2000   | 0813-4567-8901     |
-|   dewi  lestari  | 12-12-1995    | 62 814 567 8902    |
-| BUDI SANTOSO     | 15/01/1990    | 081234567890       |  <- duplikat
-|                  | 01-01-2000    | 0817 4567 8905     |  <- nama kosong
-```
+| Nama Lengkap | Tanggal Lahir | No HP |
+|--------------|---------------|-------|
+| `  BUDI SANTOSO ` | `15/01/1990` | `081234567890` |
+| `siti nurhaliza` | `1985-03-20` | `+62 812 3456 7891` |
+| `AHMAD   DAHLAN` | `05 Mei 2000` | `0813-4567-8901` |
+| `dewi  lestari` | `12-12-1995` | `62 814 567 8902` |
+| `BUDI SANTOSO` | `15/01/1990` | `081234567890` ← duplicate |
+| *(blank)* | `01-01-2000` | `0817 4567 8905` |
 
-Masalah yang ditangani:
-
-- **Nama** — huruf besar/kecil tidak konsisten, spasi berlebih
-- **Tanggal** — format campur (`DD/MM/YYYY`, `YYYY-MM-DD`, `05 Mei 2000`)
-- **No HP** — awalan `+62`, `62`, `0`, dengan/tanpa pemisah; nol di depan bisa hilang
-  jika Excel menyimpan nomor sebagai angka
-- **Duplikat** — baris yang sama diinput berkali-kali
-- **Data kosong** — kolom penting tidak diisi
-
-## Instalasi
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cara Menggunakan
+## Usage
 
 ```bash
-python data_cleaner.py                 # config.yaml di folder utility
-python data_cleaner.py config.yaml     # positional
-python data_cleaner.py -c config.yaml  # opsi eksplisit
+python data_cleaner.py                 # uses config.yaml in the utility folder
+python data_cleaner.py config.yaml     # positional config path
+python data_cleaner.py -c config.yaml  # explicit option
 ```
 
-Path file config dari CLI mengikuti current working directory. Path `input` dan `output`
-di dalam config di-resolve relatif terhadap folder utility, atau bisa diisi absolut.
+Config paths passed on the command line resolve against the current working directory.
+Inside the config, `input` and `output` resolve against the utility folder unless absolute.
 
-## Konfigurasi
+## Configuration
 
 ```yaml
 input: sample/data_kotor.xlsx
@@ -65,7 +56,7 @@ cleaning:
 
   telepon:
     kolom: "No HP"
-    format: "0xxx-xxxx-xxxx"   # atau "+62xxx-xxxx-xxxx"
+    format: "0xxx-xxxx-xxxx"   # or "+62xxx-xxxx-xxxx"
 
   duplikat:
     kolom: ["Nama Lengkap", "No HP"]
@@ -74,15 +65,15 @@ cleaning:
     kolom: ["Nama Lengkap"]
 ```
 
-## Demo (hasil run nyata)
+## Demo output
 
 ```bash
 python generate_sample.py
 python data_cleaner.py
 ```
 
-```
-Membaca file: /path/ke/repo/02-data-cleaner/sample/data_kotor.xlsx
+```text
+Membaca file: .../02-data-cleaner/sample/data_kotor.xlsx
 Total baris: 10
 
 Proses cleaning:
@@ -92,39 +83,41 @@ Proses cleaning:
   Duplikat: 1 baris dihapus
   Baris kosong: 1 baris dihapus
 
-Berhasil! Data bersih disimpan ke: /path/ke/repo/02-data-cleaner/output/data_bersih.xlsx
+Berhasil! Data bersih disimpan ke: .../02-data-cleaner/output/data_bersih.xlsx
 Total baris setelah cleaning: 8
 ```
 
-## Format Nomor HP
+So 10 dirty rows become **8 clean rows**: one duplicate and one row with a missing name are
+removed.
 
-Nomor dinormalisasi ke awalan `0`, lalu diformat **tanpa memotong digit**:
+## Phone formatting
 
-| Input | Digit hasil normalisasi | Output |
-|-------|-------------------------|--------|
+Numbers are normalized to a leading `0` and formatted **without dropping digits**:
+
+| Input | Normalized digits | Output |
+|-------|-------------------|--------|
 | `081234567890` | `081234567890` (12) | `0812-3456-7890` |
 | `+62 812 3456 7891` | `081234567891` (12) | `0812-3456-7891` |
 | `62 814 567 8902` | `08145678902` (11) | `0814-567-8902` |
 
-Aturan:
+Rules:
 
-- 12 digit → `0xxx-xxxx-xxxx`
-- 11 digit → `0xxx-xxx-xxxx`
-- panjang lain (10–15) → grup 4 digit dari kiri, sisa digit tetap disertakan
-- di luar 10–15 digit → nilai asli dipertahankan dan dihitung dalam peringatan
+- 12 digits → `0xxx-xxxx-xxxx`
+- 11 digits → `0xxx-xxx-xxxx`
+- other lengths within 10–15 → groups of four from the left, remainder included
+- outside 10–15 digits → the original value is kept and counted in a warning
 
-Kolom telepon dibaca dan ditulis sebagai **teks** (`dtype=str` + number format `@`) supaya
-angka nol di depan tidak berubah menjadi angka.
+Phone columns are read and written as **text** (`dtype=str` plus number format `@`) so a
+leading zero never turns into a number.
 
-## Catatan
+## Notes
 
-- Kolom yang tidak ada di config dibiarkan apa adanya.
-- Jika kolom yang diminta tidak ditemukan, cleaning untuk kolom itu dilewati dengan
-  peringatan.
-- File output ditimpa jika sudah ada.
+- Columns not mentioned in the config are left untouched.
+- If a configured column is missing, that cleaning step is skipped with a warning.
+- An existing output file is overwritten.
 
-## Roadmap Singkat
+## Ideas
 
-- [ ] Validasi format email
-- [ ] Mapping nilai (mis. `JKT` → `Jakarta`)
-- [ ] Export laporan cleaning terpisah
+- Validate email format as an optional cleaning step.
+- Map shorthand values (for example `JKT` → `Jakarta`).
+- Export a separate cleaning report.

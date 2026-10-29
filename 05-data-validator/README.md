@@ -1,71 +1,116 @@
 # 05 · Data Validator
 
-> Bab 5 kisah [Bu Sari](../README.md): Jumat, data pendaftaran harus lolos pemeriksaan
-> sebelum masuk sistem.
+Validate Excel rows against rules defined in a YAML config.
 
-Validasi data Excel berdasarkan rules yang didefinisikan di config YAML.
+## Story
 
-## Cerita
+Andi handles program administration at **Lembaga Pelatihan Cendekia**, a training center that
+runs classes with partner schools. Registration files arrive from several sources, and the
+CRM rejects an entire upload when a single row is bad: malformed emails, phone numbers that
+are too short, impossible birth dates, missing names, NIK values that are not 16 digits, and
+statuses outside the allowed list.
 
-Data pendaftaran PT Maju Jaya datang dari form online, input manual SPG, dan import sistem
-lain. Sebelum diproses, kualitasnya harus dicek: email yang formatnya salah, nomor HP yang
-kurang digit, tanggal lahir yang tidak masuk akal, field wajib yang kosong, NIK yang bukan
-16 digit, dan status di luar pilihan yang tersedia.
+Instead of checking columns one by one, Andi defines the rules once in YAML. Every finding is
+reported with its Excel row number, the value, and a message — before anything reaches the
+CRM.
 
-Daripada memfilter dan memeriksa satu per satu, rules didefinisikan sekali di YAML. Setiap
-temuan dilaporkan lengkap dengan nomor baris, nilai, dan pesannya.
+The sample file has 12 registration rows with seven columns:
 
-## Instalasi
+```text
+Nama Lengkap · Email · No HP · Tanggal Lahir · Umur · NIK · Status
+```
+
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cara Menggunakan
+## Usage
 
 ```bash
-# pakai config.yaml di folder utility
+# use config.yaml in the utility folder
 python data_validator.py
 
-# file dan output lewat CLI
+# pass input and output on the command line
 python data_validator.py data.xlsx --output report.xlsx
 ```
 
-Path dari CLI mengikuti current working directory. Path `input` dan `output` di dalam config
-di-resolve relatif terhadap folder utility.
+Command-line paths resolve against the current working directory. `input` and `output` inside
+the config resolve against the utility folder.
 
-## Opsi CLI
+## Options
 
-| Opsi | Shortcut | Deskripsi |
-|------|----------|-----------|
-| `input` | – | File Excel input (positional) |
-| `--output` | `-o` | Export hasil ke file Excel |
-| `--config` | `-c` | File config YAML (default `config.yaml`) |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `input` | – | Input Excel file (positional) |
+| `--output` | `-o` | Export the result to an Excel file |
+| `--config` | `-c` | YAML config file (default `config.yaml`) |
 
-## Rules yang Didukung
+## Supported rules
 
-| Rule | Keterangan | Contoh config |
-|------|-----------|---------------|
-| `required` | Tidak boleh kosong | `- type: required` |
-| `email` | Format email valid | `- type: email` |
-| `phone` | Panjang digit min–max | `- type: phone`<br>`  min_digits: 10`<br>`  max_digits: 15` |
-| `date_range` | Tanggal dalam rentang | `- type: date_range`<br>`  min: "1950-01-01"` |
-| `number_range` | Angka dalam rentang | `- type: number_range`<br>`  min: 17`<br>`  max: 65` |
-| `regex` | Pola kustom | `- type: regex`<br>`  pattern: "^\\d{16}$"` |
-| `in_list` | Nilai dari daftar | `- type: in_list`<br>`  values: ["Aktif", "Nonaktif"]` |
-| `unique` | Tidak boleh duplikat | `- type: unique` |
+| Rule | Meaning | Config example |
+|------|---------|----------------|
+| `required` | Value must not be empty | `- type: required` |
+| `email` | Valid email format | `- type: email` |
+| `phone` | Digit count within min–max | `- type: phone`<br>`  min_digits: 10`<br>`  max_digits: 15` |
+| `date_range` | Date within a range | `- type: date_range`<br>`  min: "1950-01-01"` |
+| `number_range` | Number within a range | `- type: number_range`<br>`  min: 17`<br>`  max: 65` |
+| `regex` | Custom pattern | `- type: regex`<br>`  pattern: "^\\d{16}$"` |
+| `in_list` | Value from a fixed list | `- type: in_list`<br>`  values: ["Aktif", "Nonaktif"]` |
+| `unique` | Value must not repeat | `- type: unique` |
 
-Satu kolom boleh punya beberapa rules, dijalankan berurutan.
+A column can have several rules; they run in the order written.
 
-## Demo (hasil run nyata)
+## Example configuration
+
+```yaml
+input: sample/data_pendaftaran.xlsx
+output: output/validation_report.xlsx
+
+rules:
+  Nama Lengkap:
+    - type: required
+
+  Email:
+    - type: required
+    - type: email
+
+  No HP:
+    - type: required
+    - type: phone
+      min_digits: 10
+      max_digits: 15
+
+  Tanggal Lahir:
+    - type: date_range
+      min: "1950-01-01"
+      max: "2010-12-31"
+
+  Umur:
+    - type: number_range
+      min: 17
+      max: 65
+
+  NIK:
+    - type: regex
+      pattern: "^\\d{16}$"
+      message: "NIK harus 16 digit angka"
+
+  Status:
+    - type: in_list
+      values: ["Aktif", "Nonaktif", "Pending"]
+```
+
+## Demo output
 
 ```bash
 python generate_sample.py
 python data_validator.py
 ```
 
-```
-Membaca file: /path/ke/repo/05-data-validator/sample/data_pendaftaran.xlsx
+```text
+Membaca file: .../05-data-validator/sample/data_pendaftaran.xlsx
 Total baris: 12
 Kolom: Nama Lengkap, Email, No HP, Tanggal Lahir, Umur, NIK, Status
 
@@ -99,38 +144,35 @@ Ringkasan:
   Baris 6: Nilai "Tidak Valid" tidak valid. Harus salah satu dari: ['Aktif', 'Nonaktif', 'Pending']
   Baris 9: Nilai "Batal" tidak valid. Harus salah satu dari: ['Aktif', 'Nonaktif', 'Pending']
 
-Laporan Excel disimpan ke: /path/ke/repo/05-data-validator/output/validation_report.xlsx
+Laporan Excel disimpan ke: .../05-data-validator/output/validation_report.xlsx
 ```
 
-## Nomor HP Tetap Teks
+The run checks **12 rows** and finds **5 valid rows** and **7 rows with errors**, for **17
+findings** in total.
 
-Kolom yang punya rule `phone` dibaca sebagai teks, sehingga nilai di laporan tetap
-`08123456`, bukan `8123456`. Panjang digit diperiksa setelah normalisasi awalan `62`/`8`
-menjadi `0`, dengan batas bawah `min_digits` dan batas atas `max_digits` (default 10–15).
-Laporan Excel juga menulis kolom tersebut sebagai teks (number format `@`).
+## Phone numbers stay text
 
-## Output Excel
+Columns with a `phone` rule are read as text, so values such as `08123456` keep their leading
+zero in the report. Digit length is checked after normalizing a `62`/`8` prefix to `0`, using
+`min_digits` and `max_digits` (default 10–15). The exported workbook also writes those columns
+as text (number format `@`).
 
-File laporan berisi 3 sheet:
+## Excel report
 
-1. **Summary** — jumlah baris, valid, baris error, dan total masalah
-2. **Detail Error** — baris, kolom, nilai, rule, dan pesan
-3. **Data** — data asli dengan highlight merah pada sel yang bermasalah
+The report contains three sheets:
 
-## Contoh Config Lengkap
+1. **Summary** — total rows, valid rows, error rows, and total findings
+2. **Detail Error** — row, column, value, rule, and message
+3. **Data** — the original data with problem cells highlighted in red
 
-Ada di [`config.yaml`](./config.yaml) pada folder ini, termasuk `min_digits` dan
-`max_digits` untuk kolom `No HP`.
+## Notes
 
-## Catatan
+- If a configured column is missing, that column's rules are skipped with a warning.
+- Empty cells are not validated, except by the `required` rule.
+- Rules run in the order they appear in the YAML file.
 
-- Jika kolom yang diminta tidak ditemukan, validasi kolom tersebut dilewati dengan
-  peringatan.
-- Sel kosong tidak divalidasi, kecuali oleh rule `required`.
-- Rules dijalankan berurutan sesuai urutan di YAML.
+## Ideas
 
-## Roadmap Singkat
-
-- [ ] Validasi antar kolom (mis. tanggal mulai < tanggal selesai)
-- [ ] Import rules dari file terpisah
-- [ ] Export hanya baris yang error
+- Validate across columns (for example, start date before end date).
+- Load rules from a separate, reusable file.
+- Export only the failing rows.
