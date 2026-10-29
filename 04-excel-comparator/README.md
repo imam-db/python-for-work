@@ -24,8 +24,12 @@ The sample has ten rows in each version, with changes spread across totals and s
 
 ## Install
 
+Dependencies live in the repository root:
+
 ```bash
 pip install -r requirements.txt
+# or, for the pfw command too:
+pip install -e .
 ```
 
 ## Usage
@@ -42,6 +46,12 @@ python excel_comparator.py file_lama.xlsx file_baru.xlsx --key "No"
 
 # also export the report to Excel
 python excel_comparator.py file_lama.xlsx file_baru.xlsx --key "No" -o laporan.xlsx
+```
+
+The same options are available through `pfw`:
+
+```bash
+pfw compare file_lama.xlsx file_baru.xlsx --key "No" -o laporan.xlsx
 ```
 
 Command-line paths resolve against the current working directory. `file_old`, `file_new`, and
