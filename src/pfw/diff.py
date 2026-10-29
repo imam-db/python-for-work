@@ -1,4 +1,4 @@
-"""Compare two workbooks and report what changed."""
+"""Compare two tabular files and report what changed."""
 
 from __future__ import annotations
 
@@ -202,12 +202,12 @@ def print_report(result: dict, key_column: str | None = None) -> None:
 def export_to_excel(
     result: dict, output_path: str, key_column: str | None = None
 ) -> None:
-    """Export hasil perbandingan ke Excel dengan highlight."""
+    """Export the comparison result to a highlighted spreadsheet report."""
     workbook = Workbook()
 
     ws_summary = workbook.active
     ws_summary.title = "Summary"
-    ws_summary["A1"] = "Excel Comparison Report"
+    ws_summary["A1"] = "Comparison Report"
     ws_summary["A1"].font = Font(bold=True, size=14)
     ws_summary["A3"] = "Rows added:"
     ws_summary["B3"] = result["summary"]["added_count"]
@@ -238,7 +238,7 @@ def export_to_excel(
             cell.font = Font(bold=True)
 
     if result["added"]:
-        ws_added = workbook.create_sheet("Added Rows")
+        ws_added = workbook.create_sheet("New Rows")
         headers = list(result["added"][0]["data"].keys())
         ws_added.append(headers)
         for cell in ws_added[1]:
@@ -263,7 +263,7 @@ def export_to_excel(
     output_file.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(output_file)
     log.info("")
-    log.info("Excel report saved to: %s", output_path)
+    log.info("Report saved to: %s", output_path)
 
 
 def compare_excel(
@@ -309,10 +309,10 @@ def compare_excel(
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("file_old", help="Older Excel/CSV/Parquet file")
-    parser.add_argument("file_new", help="Newer Excel/CSV/Parquet file")
+    parser.add_argument("file_old", help="Older tabular file (.xlsx, .csv, .parquet)")
+    parser.add_argument("file_new", help="Newer tabular file (.xlsx, .csv, .parquet)")
     parser.add_argument("--key", "-k", help="Key column used to match rows")
-    parser.add_argument("--output", "-o", help="Export the report to an Excel file")
+    parser.add_argument("--output", "-o", help="Export the report to an .xlsx file")
 
 
 def build_parser() -> argparse.ArgumentParser:

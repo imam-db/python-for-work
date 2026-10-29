@@ -1,6 +1,6 @@
 # diff
 
-Compare two workbook versions and report exactly what changed.
+Compare two tabular file versions and report exactly what changed.
 
 ## Story
 
@@ -23,5 +23,5 @@ pfw diff ./sample/data_lama.xlsx ./sample/data_revisi.xlsx --key No -o ./output/
 
 ## Output
 
-A console report plus an optional highlighted Excel report (Summary, Perubahan, Baris Baru,
-Baris Dihapus).
+A console report plus an optional highlighted spreadsheet report (Summary, Changes, New Rows,
+Deleted Rows).

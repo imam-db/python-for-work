@@ -10,8 +10,8 @@ from pfw import __version__, clean, diff, merge, sample, split, validate
 UTILITIES = [
     (merge, "merge", "Merge tabular files from a folder"),
     (clean, "clean", "Clean names, dates, and phones"),
-    (split, "split", "Split a workbook by column"),
-    (diff, "diff", "Diff two workbook versions"),
+    (split, "split", "Split a tabular file by column"),
+    (diff, "diff", "Diff two file versions"),
     (validate, "validate", "Validate rows against YAML rules"),
 ]
 
